@@ -12,4 +12,8 @@ export default registerAs('app', () => ({
     autoLoadEntities: true,
     synchronize: process.env.DATABASE_SYNCHRONIZE === '1',
   },
+  clerk: {
+    secretKey: process.env.CLERK_SECRET_KEY,
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  },
 }));
