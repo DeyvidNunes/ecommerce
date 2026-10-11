@@ -4,6 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
+import { QueryProductsDto } from './dto/query-products.dto';
 
 @Injectable()
 export class ProductsService {
@@ -14,11 +15,40 @@ export class ProductsService {
 
   create(createProductDto: CreateProductDto) {
     const product = this.productsRepository.create(createProductDto);
-    return this.productsRepository.create(product);
+    return this.productsRepository.save(product);
   }
 
-  findAll() {
-    return this.productsRepository.find({ where: { active: true } });
+  async findAll({ page, limit, search, category }: QueryProductsDto) {
+    const qb = this.productsRepository
+      .createQueryBuilder('product')
+      .where('product.active = :active', { active: true });
+
+    if (category) {
+      qb.andWhere('product.category = :category', { category });
+    }
+
+    if (search) {
+      qb.andWhere(
+        '(product.name LIKE :search OR product.description LIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const [data, total] = await qb
+      .orderBy('product.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: number) {
