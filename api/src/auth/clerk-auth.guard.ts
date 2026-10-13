@@ -8,12 +8,14 @@ import {
 import type { ConfigType } from '@nestjs/config';
 import { verifyToken } from '@clerk/backend';
 import appConfig from '../config/app.config';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ClerkAuthGuard implements CanActivate {
   constructor(
     @Inject(appConfig.KEY)
     private readonly config: ConfigType<typeof appConfig>,
+    private readonly usersService: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,14 +28,18 @@ export class ClerkAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token não informado');
     }
 
+    let payload;
     try {
-      const payload = await verifyToken(token, {
+      payload = await verifyToken(token, {
         secretKey: this.config.clerk.secretKey,
       });
-      request.auth = payload;
-      return true;
     } catch {
       throw new UnauthorizedException('Token inválido ou expirado');
     }
+
+    request.auth = payload;
+    request.user = await this.usersService.findOrCreateByClerkId(payload.sub);
+
+    return true;
   }
 }
