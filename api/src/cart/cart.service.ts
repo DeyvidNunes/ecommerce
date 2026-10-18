@@ -161,7 +161,31 @@ export class CartService {
     return this.formatCart(updatedCart);
   }
 
-  removeItem(id: number) {
-    return `This action removes a #${id} cart`;
+  async removeItem(user: User, itemId: number) {
+    const cart = await this.getOrCreateCart(user);
+
+    const existingItem = cart.items.find((item) => item.id === itemId);
+
+    if (!existingItem) {
+      throw new NotFoundException('Item não encontrado no carrinho');
+    }
+
+    await this.cartItemRepository.remove(existingItem);
+
+    const updatedCart = await this.getOrCreateCart(user);
+
+    return this.formatCart(updatedCart);
+  }
+
+  async clear(user: User) {
+    const cart = await this.getOrCreateCart(user);
+
+    if (cart.items.length > 0) {
+      await this.cartItemRepository.remove(cart.items);
+    }
+
+    const updatedCart = await this.getOrCreateCart(user);
+
+    return this.formatCart(updatedCart);
   }
 }

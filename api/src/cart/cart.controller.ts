@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -37,5 +38,18 @@ export class CartController {
     @Param('itemId', ParseIntPipe) itemId: number,
   ) {
     return this.cartService.updateItem(user, itemId, updateCartItemDto);
+  }
+
+  @Delete('items/:itemId')
+  removeItem(
+    @CurrentUser() user: User,
+    @Param('itemId', ParseIntPipe) itemId: number,
+  ) {
+    return this.cartService.removeItem(user, itemId);
+  }
+
+  @Delete()
+  clear(@CurrentUser() user: User) {
+    return this.cartService.clear(user);
   }
 }
