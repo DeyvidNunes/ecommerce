@@ -14,7 +14,7 @@ import { Cart } from './cart.entity';
 export class CartItem {
   @PrimaryGeneratedColumn() 
   id: number;
-
+ 
   @ManyToOne(() => Cart, (cart) => cart.items, {
     nullable: false,
     onDelete: 'CASCADE',

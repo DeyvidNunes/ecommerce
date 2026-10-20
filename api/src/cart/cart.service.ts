@@ -30,9 +30,9 @@ export class CartService {
     return this.formatCart(cart);
   }
 
-  private async getOrCreateCart(user: User) {
+   async getOrCreateCart(user: User) {
     const existing = await this.cartRepository.findOne({
-      where: { user: { id: user.id } },
+      where: { user: { id: user?.id } },
       relations: {
         items: {
           product: true,
