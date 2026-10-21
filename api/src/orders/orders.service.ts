@@ -10,12 +10,17 @@ import { Order, OrderStatus } from './entities/order.entity';
 import { DataSource, Repository } from 'typeorm';
 import { OrderItem } from './entities/order-item.entity';
 import { QueryOrdersDto } from './dto/query-orders-dto';
+import { BadGatewayException, Logger } from '@nestjs/common';
+import Stripe from 'stripe';
+import { PaymentsService } from '../payments/payments.service';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
   constructor(
     private readonly cartService: CartService,
     private readonly dataSource: DataSource,
+    private readonly paymentsService: PaymentsService,
 
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
@@ -25,7 +30,7 @@ export class OrdersService {
     const errors: string[] = [];
 
     if (cart.items.length === 0) {
-      throw new BadRequestException(`Carrinho vazio`);
+      throw new BadRequestException('Carrinho vazio');
     }
 
     for (const item of cart.items) {
@@ -67,10 +72,36 @@ export class OrdersService {
       return manager.save(newOrder);
     });
 
+    // Declara a variável que guardará o retorno da sessão do Stripe
+    let session: Stripe.Checkout.Session;
+
+    try {
+      // Tenta chamar o PaymentsService para criar a sessão no Stripe
+      session = await this.paymentsService.createCheckoutSession(order);
+    } catch (error) {
+      // 1. Registra o erro no sistema de logs
+      this.logger.error(
+        `Falha ao criar sessão do Stripe para o pedido ${order.id}`,
+        error,
+      );
+      // 2. Atualiza o status do pedido no seu banco de dados para CANCELADO
+      await this.orderRepository.update(order.id, {
+        status: OrderStatus.CANCELED,
+      });
+      throw new BadGatewayException(
+        'Não foi possível iniciar o pagamento. Tente novamente.',
+      );
+    }
+    // Salva o ID da sessão do Stripe no banco de dados
+    await this.orderRepository.update(order.id, {
+      stripeSessionId: session.id,
+    });
+
     return {
       id: order.id,
       status: order.status,
       totalInCents: order.totalInCents,
+      checkoutUrl: session.url,
     };
   }
 
