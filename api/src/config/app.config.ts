@@ -16,4 +16,8 @@ export default registerAs('app', () => ({
     secretKey: process.env.CLERK_SECRET_KEY,
     publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
   },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+  },
+  frontendUrl: process.env.FRONTEND_URL,
 }));
