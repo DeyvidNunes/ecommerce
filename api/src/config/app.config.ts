@@ -18,6 +18,7 @@ export default registerAs('app', () => ({
   },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   },
   frontendUrl: process.env.FRONTEND_URL,
 }));
