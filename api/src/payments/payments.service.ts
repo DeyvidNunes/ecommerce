@@ -102,8 +102,9 @@ export class PaymentsService {
       }
       default:
         this.logger.log(`Tipo de evento não tratado: ${event.type}`);
-        return { received: true };
     }
+
+    return { received: true };
   }
 
   private async sessionCompleted(session: Stripe.Checkout.Session) {
@@ -129,7 +130,7 @@ export class PaymentsService {
 
     if (!orderId) {
       this.logger.warn(
-        `Evento checkout.session.completed recebido para a sessão ${session.id}, mas 'orderId' esta ausente nos metadados.`,
+        `Evento checkout.session.expired recebido para a sessão ${session.id}, mas 'orderId' esta ausente nos metadados.`,
       );
       return;
     }

@@ -13,8 +13,8 @@ import { OrdersService } from './orders.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { QueryOrdersDto } from './dto/query-orders-dto';
 
-@Controller('orders')
 @UseGuards(ClerkAuthGuard)
+@Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
