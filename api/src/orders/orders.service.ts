@@ -249,4 +249,20 @@ export class OrdersService {
       await queryRunner.release();
     }
   }
+
+  async cancelPendingOrder(orderId: number): Promise<void> {
+    const result = await this.orderRepository.update(
+      { id: orderId, status: OrderStatus.PENDING },
+      { status: OrderStatus.CANCELED },
+    );
+
+    if ((result.affected ?? 0) === 0) {
+      this.logger.log(
+        `[Idempotência] Pedido ${orderId} já processado ou não está pendente.`,
+      );
+      return;
+    }
+
+    this.logger.log(`Pedido ${orderId} cancelado por expiração da sessão.`);
+  }
 }

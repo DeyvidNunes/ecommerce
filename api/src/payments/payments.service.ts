@@ -90,15 +90,20 @@ export class PaymentsService {
     this.logger.log(`Evento recebido do Stripe: ${event.type}`);
 
     switch (event.type) {
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         await this.sessionCompleted(session);
         break;
+      }
+      case 'checkout.session.expired': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        await this.sessionCanceled(session);
+        break;
+      }
       default:
         this.logger.log(`Tipo de evento não tratado: ${event.type}`);
+        return { received: true };
     }
-
-    return { received: true };
   }
 
   private async sessionCompleted(session: Stripe.Checkout.Session) {
@@ -117,5 +122,18 @@ export class PaymentsService {
     }
 
     await this.ordersService.processOrderPayment(orderId);
+  }
+
+  private async sessionCanceled(session: Stripe.Checkout.Session) {
+    const orderId = Number(session.metadata?.orderId);
+
+    if (!orderId) {
+      this.logger.warn(
+        `Evento checkout.session.completed recebido para a sessão ${session.id}, mas 'orderId' esta ausente nos metadados.`,
+      );
+      return;
+    }
+
+    await this.ordersService.cancelPendingOrder(orderId);
   }
 }
