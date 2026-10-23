@@ -13,6 +13,9 @@ import { QueryOrdersDto } from './dto/query-orders-dto';
 import { BadGatewayException, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { PaymentsService } from '../payments/payments.service';
+import { Product } from '../products/entities/product.entity';
+import { Cart } from '../cart/entities/cart.entity';
+import { CartItem } from '../cart/entities/cart-item.entity';
 
 @Injectable()
 export class OrdersService {
@@ -163,5 +166,103 @@ export class OrdersService {
       createdAt: order.createdAt,
       items, // Retorna o array de itens mapeados acima
     };
+  }
+
+  async processOrderPayment(orderId: number): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Idempotência: só marca como pago se ainda estiver pendente
+      const updateResult = await queryRunner.manager
+        .createQueryBuilder()
+        .update(Order)
+        .set({ status: OrderStatus.PAID })
+        .where('id = :orderId AND status = :status', {
+          orderId,
+          status: OrderStatus.PENDING,
+        })
+        .execute();
+
+      if ((updateResult.affected ?? 0) === 0) {
+        this.logger.log(
+          `[Idempotência] Pedido ${orderId} já processado ou não está pendente.`,
+        );
+        await queryRunner.rollbackTransaction();
+        return;
+      }
+
+      const order = await queryRunner.manager.findOne(Order, {
+        where: { id: orderId },
+        relations: { user: true, items: { product: true } },
+      });
+
+      if (!order) {
+        throw new Error(`Pedido ${orderId} não encontrado após atualização`);
+      }
+
+      // Baixa de estoque condicional
+      for (const item of order.items) {
+        const stockResult = await queryRunner.manager
+          .createQueryBuilder()
+          .update(Product)
+          .set({ stock: () => 'stock - :quantity' })
+          .where('id = :productId AND stock >= :quantity', {
+            productId: item.product.id,
+            quantity: item.quantity,
+          })
+          .execute();
+
+        if ((stockResult.affected ?? 0) === 0) {
+          this.logger.error(
+            `[ALERTA DE ESTOQUE] Pedido ${orderId} pago, mas o produto ${item.product.id} não tinha estoque suficiente`,
+          );
+        }
+      }
+
+      // Esvaziar o carrinho do dono do pedido
+      const cart = await queryRunner.manager.findOne(Cart, {
+        where: { user: { id: order.user.id } },
+      });
+
+      if (cart) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(CartItem)
+          .where('cart_id = :cartId', { cartId: cart.id })
+          .execute();
+      }
+
+      await queryRunner.commitTransaction();
+      this.logger.log(`Pagamento do pedido ${orderId} confirmado com sucesso.`);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Erro ao processar pagamento do pedido ${orderId}: ${message}`,
+      );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async cancelPendingOrder(orderId: number): Promise<void> {
+    const result = await this.orderRepository.update(
+      { id: orderId, status: OrderStatus.PENDING },
+      { status: OrderStatus.CANCELED },
+    );
+
+    if ((result.affected ?? 0) === 0) {
+      this.logger.log(
+        `[Idempotência] Pedido ${orderId} já processado ou não está pendente.`,
+      );
+      return;
+    }
+
+    this.logger.log(`Pedido ${orderId} cancelado por expiração da sessão.`);
   }
 }

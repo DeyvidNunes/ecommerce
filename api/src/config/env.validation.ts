@@ -10,5 +10,6 @@ export const envValidationSchema = Joi.object({
   DATABASE_NAME: Joi.string().required(),
   DATABASE_SYNCHRONIZE: Joi.string().valid('0', '1').default('0'),
   STRIPE_SECRET_KEY: Joi.string().required(),
+  STRIPE_WEBHOOK_SECRET: Joi.string().required(),
   FRONTEND_URL: Joi.string().uri().required(),
 });
