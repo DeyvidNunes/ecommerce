@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import Stripe from 'stripe';
 import appConfig from '../config/app.config';
@@ -9,6 +14,7 @@ import { Order } from '../orders/entities/order.entity';
 export class PaymentsService {
   // Instância privada do cliente do Stripe
   private readonly stripe: Stripe;
+  private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
     // Injeta as configurações da aplicação (onde fica a chave secreta do Stripe e URL do frontend)
@@ -50,5 +56,41 @@ export class PaymentsService {
       // URL para onde o cliente vai se cancelar ou desistir do pagamento
       cancel_url: `${frontendUrl}/cart`,
     });
+  }
+
+  constructWebhookEvent(rawBody: Buffer, signature: string): Stripe.Event {
+    if (!signature) {
+      throw new BadRequestException('O cabeçalho stripe-signature está ausente.');
+    }
+    const webhookSecret = this.config.stripe.webhookSecret!;
+
+    try {
+      return this.stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret,
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Falha na verificação da assinatura do webhook: ${errorMessage}`,
+      );
+      throw new BadRequestException(`Assinatura do webhook inválida`);
+    }
+  }
+
+  handleWebhookEvent(event: Stripe.Event) {
+    this.logger.log(`Evento recebido do Stripe: ${event.type}`);
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        // lógica futura
+        break;
+      default:
+        this.logger.log(`Tipo de evento não tratado: ${event.type}`);
+    }
+
+    return { received: true };
   }
 }
