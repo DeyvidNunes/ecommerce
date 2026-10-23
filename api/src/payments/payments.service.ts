@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  forwardRef,
   Inject,
   Injectable,
   Logger,
@@ -8,6 +9,7 @@ import type { ConfigType } from '@nestjs/config';
 import Stripe from 'stripe';
 import appConfig from '../config/app.config';
 import { Order } from '../orders/entities/order.entity';
+import { OrdersService } from '../orders/orders.service';
 
 // @Injectable() avisa ao NestJS que esta classe pode ser injetada em outros serviços ou controllers
 @Injectable()
@@ -20,6 +22,8 @@ export class PaymentsService {
     // Injeta as configurações da aplicação (onde fica a chave secreta do Stripe e URL do frontend)
     @Inject(appConfig.KEY)
     private readonly config: ConfigType<typeof appConfig>,
+    @Inject(forwardRef(() => OrdersService))
+    private readonly ordersService: OrdersService,
   ) {
     // Inicializa o SDK do Stripe passando a chave secreta vinda das configurações
     this.stripe = new Stripe(this.config.stripe.secretKey!);
@@ -60,7 +64,9 @@ export class PaymentsService {
 
   constructWebhookEvent(rawBody: Buffer, signature: string): Stripe.Event {
     if (!signature) {
-      throw new BadRequestException('O cabeçalho stripe-signature está ausente.');
+      throw new BadRequestException(
+        'O cabeçalho stripe-signature está ausente.',
+      );
     }
     const webhookSecret = this.config.stripe.webhookSecret!;
 
@@ -80,17 +86,36 @@ export class PaymentsService {
     }
   }
 
-  handleWebhookEvent(event: Stripe.Event) {
+  async handleWebhookEvent(event: Stripe.Event) {
     this.logger.log(`Evento recebido do Stripe: ${event.type}`);
 
     switch (event.type) {
       case 'checkout.session.completed':
-        // lógica futura
+        const session = event.data.object as Stripe.Checkout.Session;
+        await this.sessionCompleted(session);
         break;
       default:
         this.logger.log(`Tipo de evento não tratado: ${event.type}`);
     }
 
     return { received: true };
+  }
+
+  private async sessionCompleted(session: Stripe.Checkout.Session) {
+    const orderId = Number(session.metadata?.orderId);
+
+    if (session.payment_status !== 'paid') {
+      this.logger.warn(`Sessão ${session.id} recebida com pagamento pendente.`);
+      return;
+    }
+
+    if (!orderId) {
+      this.logger.warn(
+        `Evento checkout.session.completed recebido para a sessão ${session.id}, mas 'orderId' esta ausente nos metadados.`,
+      );
+      return;
+    }
+
+    await this.ordersService.processOrderPayment(orderId);
   }
 }
