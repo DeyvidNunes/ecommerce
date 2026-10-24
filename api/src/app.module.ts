@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { PaymentsModule } from './payments/payments.module';
     CartModule,
     OrdersModule,
     PaymentsModule,
-    PaymentsModule
+    PaymentsModule,
+    MailModule
   ],
   controllers: [AppController],
   providers: [AppService],
