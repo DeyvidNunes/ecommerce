@@ -16,6 +16,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { Product } from '../products/entities/product.entity';
 import { Cart } from '../cart/entities/cart.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class OrdersService {
@@ -24,6 +25,7 @@ export class OrdersService {
     private readonly cartService: CartService,
     private readonly dataSource: DataSource,
     private readonly paymentsService: PaymentsService,
+    private readonly mailService: MailService,
 
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
@@ -170,6 +172,7 @@ export class OrdersService {
 
   async processOrderPayment(orderId: number): Promise<void> {
     const queryRunner = this.dataSource.createQueryRunner();
+    let paidOrder: Order | null = null;
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -202,6 +205,8 @@ export class OrdersService {
       if (!order) {
         throw new Error(`Pedido ${orderId} não encontrado após atualização`);
       }
+
+      paidOrder = order;
 
       // Baixa de estoque condicional
       for (const item of order.items) {
@@ -247,6 +252,41 @@ export class OrdersService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+
+    if (paidOrder) {
+      await this.sendConfirmationEmail(paidOrder);
+    }
+  }
+
+  private async sendConfirmationEmail(order: Order): Promise<void> {
+    const email = order.user.email;
+
+    if (!email) {
+      this.logger.warn(
+        `Pedido ${order.id} pago, mas o usuário não tem e-mail. Envio pulado.`,
+      );
+      return;
+    }
+
+    try {
+      await this.mailService.sendOrderConfirmation({
+        to: email,
+        customerName: order.user.firstName ?? 'cliente',
+        orderId: order.id,
+        items: order.items.map((item) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          unitPriceInCents: item.unitPriceInCents,
+          subtotalInCents: item.unitPriceInCents * item.quantity,
+        })),
+        totalInCents: order.totalInCents,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Pedido ${order.id} pago, mas o e-mail de confirmação falhou: ${message}`,
+      );
     }
   }
 

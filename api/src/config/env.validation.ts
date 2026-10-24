@@ -12,4 +12,6 @@ export const envValidationSchema = Joi.object({
   STRIPE_SECRET_KEY: Joi.string().required(),
   STRIPE_WEBHOOK_SECRET: Joi.string().required(),
   FRONTEND_URL: Joi.string().uri().required(),
+  RESEND_API_KEY: Joi.string().required(),
+  MAIL_FROM: Joi.string().required(),
 });

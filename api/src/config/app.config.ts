@@ -20,5 +20,9 @@ export default registerAs('app', () => ({
     secretKey: process.env.STRIPE_SECRET_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   },
+  resend: {
+    apiKey: process.env.RESEND_API_KEY,
+    mailFrom: process.env.MAIL_FROM,
+  },
   frontendUrl: process.env.FRONTEND_URL,
 }));
