@@ -31,7 +31,7 @@ export class ProductsController {
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.productsService.findOne(id);
+    return this.productsService.findOneActive(id);
   }
 
   @UseGuards(ClerkAuthGuard, RolesGuard)

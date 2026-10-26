@@ -59,20 +59,30 @@ export class ProductsService {
     return product;
   }
 
+  async findOneActive(id: number) {
+    const product = await this.findOne(id);
+
+    if (!product.active) {
+      throw new NotFoundException(`Produto ${id} não encontrado`);
+    }
+
+    return product;
+  }
+
   async update(id: number, updateProductDto: UpdateProductDto) {
     const product = await this.findOne(id);
     Object.assign(product, updateProductDto);
     return this.productsRepository.save(product);
   }
 
- async remove(id: number): Promise<void> {
-  const product = await this.findOne(id);
+  async remove(id: number): Promise<void> {
+    const product = await this.findOne(id);
 
-  if (!product.active) {
-    return;
+    if (!product.active) {
+      return;
+    }
+
+    product.active = false;
+    await this.productsRepository.save(product);
   }
-
-  product.active = false;
-  await this.productsRepository.save(product);
-}
 }
