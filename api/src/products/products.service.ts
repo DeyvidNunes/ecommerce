@@ -65,9 +65,14 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  async remove(id: number) {
-    const product = await this.findOne(id);
-    await this.productsRepository.remove(product);
-    
+ async remove(id: number): Promise<void> {
+  const product = await this.findOne(id);
+
+  if (!product.active) {
+    return;
   }
+
+  product.active = false;
+  await this.productsRepository.save(product);
+}
 }

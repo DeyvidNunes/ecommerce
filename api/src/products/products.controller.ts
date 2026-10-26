@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Query,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -53,6 +54,7 @@ export class ProductsController {
   @UseGuards(ClerkAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
+  @HttpCode(204)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.remove(id);
   }
