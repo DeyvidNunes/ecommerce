@@ -19,21 +19,30 @@ import { Roles } from '../auth/roles.decorator';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @ApiOperation({
+    summary:
+      'Lista produtos ativos, com paginação, busca e filtro por categoria',
+  })
   @Get()
   findAll(@Query() query: QueryProductsDto) {
     return this.productsService.findAll(query);
   }
 
+  @ApiOperation({ summary: 'Busca um produto ativo pelo id' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.productsService.findOneActive(id);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cria um produto (admin)' })
   @UseGuards(ClerkAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Post()
@@ -41,6 +50,10 @@ export class ProductsController {
     return this.productsService.create(createProductDto);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Atualiza um produto ou o reativa com active: true (admin)',
+  })
   @UseGuards(ClerkAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Patch(':id')
@@ -51,6 +64,10 @@ export class ProductsController {
     return this.productsService.update(id, updateProductDto);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Desativa um produto, mantendo o histórico de pedidos (admin)',
+  })
   @UseGuards(ClerkAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
