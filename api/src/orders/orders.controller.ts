@@ -13,6 +13,7 @@ import { OrdersService } from './orders.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { QueryOrdersDto } from './dto/query-orders-dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -25,6 +26,7 @@ export class OrdersController {
     summary:
       'Cria o pedido a partir do carrinho e devolve a URL de pagamento do Stripe',
   })
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('checkout')
   checkout(@CurrentUser() user: User) {
     return this.ordersService.checkout(user);
