@@ -12,8 +12,9 @@ import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { MailModule } from './mail/mail.module';
-import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
       inject: [appConfig.KEY],
       useFactory: (config: ConfigType<typeof appConfig>) => config.database,
     }),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     ProductsModule,
     AuthModule,
     UsersModule,
@@ -40,6 +42,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     AppService,
     AppService,
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}
