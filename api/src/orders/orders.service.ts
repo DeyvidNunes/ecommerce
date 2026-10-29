@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -24,6 +26,7 @@ export class OrdersService {
   constructor(
     private readonly cartService: CartService,
     private readonly dataSource: DataSource,
+    @Inject(forwardRef(() => PaymentsService))
     private readonly paymentsService: PaymentsService,
     private readonly mailService: MailService,
 
