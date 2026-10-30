@@ -4,7 +4,7 @@ API REST de e-commerce em **NestJS**: catálogo de produtos, carrinho, pedidos, 
 
 Projeto de estudo, construído por fases, com foco nos pontos em que um e-commerce exige consistência: dinheiro, estoque e eventos que podem chegar repetidos.
 
-> **Status:** em desenvolvimento (versão `v0.4.0`). O backend está completo. Faltam o frontend (Next.js), testes automatizados e deploy.
+> **Status:** em desenvolvimento (versão `v0.4.0`). O backend está completo. Faltam o frontend (Next.js) e deploy.
 
 ## Stack
 
@@ -84,7 +84,7 @@ A documentação interativa fica em `http://localhost:3000/api` (Swagger UI), e 
 
 ### Pré-requisitos
 
-- Node.js 20 ou superior
+- Node.js 24.9     ou superior
 - MySQL em execução
 - Contas de teste no [Clerk](https://clerk.com), no [Stripe](https://stripe.com) (modo de teste) e no [Resend](https://resend.com)
 - [Stripe CLI](https://docs.stripe.com/stripe-cli) para receber webhooks localmente
@@ -109,7 +109,6 @@ cp .env.example .env
 |---|---|
 | `PORT` | Porta da API (padrão 3000) |
 | `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` | Conexão com o MySQL |
-| `DATABASE_SYNCHRONIZE` | `1` cria e ajusta as tabelas automaticamente (**só em desenvolvimento**) |
 | `CLERK_SECRET_KEY` | Chave secreta do Clerk |
 | `STRIPE_SECRET_KEY` | Chave secreta do Stripe (modo de teste) |
 | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (`whsec_...`, impresso pelo `stripe listen`) |
@@ -121,20 +120,38 @@ Confira o `.env.example` para a lista completa e atual. As variáveis são valid
 
 ### Banco de dados
 
-Crie o banco antes de iniciar (as tabelas são criadas pelo TypeORM):
+Crie o banco antes de iniciar e rode as migrations para estruturar as tabelas:
 
 ```sql
 CREATE DATABASE ecommerce CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+```bash
+npm run migration:run
+```
+
+### Migrations
+
+O projeto utiliza o TypeORM CLI para gerenciar as alterações no banco de dados de forma versionada e segura.
+
+```bash
+# Executar as migrations pendentes no banco
+npm run migration:run
+
+# Reverter a última migration executada
+npm run migration:revert
+
+# Criar uma nova migration a partir das alterações nas @Entity()
+npm run migration:generate src/database/migrations/NomeDaMigration
+
+# Exibir a lista de migrations e o status de execução
+npm run migration:show
+```
 
 ### Executar
-
 ```bash
 npm run start:dev
 npm run seed
 ```
-
-O `seed` insere produtos de exemplo e só atua se a tabela estiver vazia.
 
 ### Receber webhooks do Stripe
 
