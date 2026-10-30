@@ -10,7 +10,6 @@ export default registerAs('app', () => ({
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
     autoLoadEntities: true,
-    synchronize: process.env.DATABASE_SYNCHRONIZE === '1',
   },
   clerk: {
     secretKey: process.env.CLERK_SECRET_KEY,
