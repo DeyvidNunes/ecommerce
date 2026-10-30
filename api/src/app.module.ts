@@ -15,6 +15,7 @@ import { MailModule } from './mail/mail.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     PaymentsModule,
     PaymentsModule,
     MailModule,
+    HealthModule
   ],
   controllers: [AppController],
   providers: [
