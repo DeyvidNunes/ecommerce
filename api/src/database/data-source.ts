@@ -9,9 +9,9 @@ try {
 }
 
 export const dataSourceOptions: DataSourceOptions = {
-  type: 'mysql',
+  type: 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
-  port: Number(process.env.DATABASE_PORT) || 3306,
+  port: Number(process.env.DATABASE_PORT) || 5432,
   username: process.env.DATABASE_USER || 'root',
   password: process.env.DATABASE_PASSWORD || '',
   database: process.env.DATABASE_NAME || 'ecommerce',

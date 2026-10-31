@@ -9,9 +9,8 @@ import {
 import type { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
 
-interface MysqlDriverError {
+interface DbDriverError {
   code?: string;
-  errno?: number;
 }
 
 @Catch()
@@ -41,23 +40,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = res.error ?? exception.name;
       }
     } else if (exception instanceof QueryFailedError) {
-      const driverError = exception.driverError as MysqlDriverError;
+      const driverError = exception.driverError as DbDriverError;
       dbCode = driverError?.code;
 
-      if (dbCode === 'ER_DUP_ENTRY') {
+      if (dbCode === '23505') {
+        // unique_violation
         statusCode = HttpStatus.CONFLICT;
         message = 'Já existe um registro com esses dados';
         error = 'Conflict';
-      } else if (
-        dbCode === 'ER_ROW_IS_REFERENCED_2' ||
-        dbCode === 'ER_ROW_IS_REFERENCED'
-      ) {
+      } else if (dbCode === '23503') {
+        // foreign_key_violation
         statusCode = HttpStatus.CONFLICT;
-        message = 'O registro está em uso e não pode ser removido';
+        message =
+          'Operação não permitida: o registro está relacionado a outros dados';
         error = 'Conflict';
       }
       // qualquer outro erro de banco continua como 500 genérico
     }
+    // qualquer outro erro de banco continua como 500 genérico
 
     const summary = `${request.method} ${request.path} -> ${statusCode}`;
 

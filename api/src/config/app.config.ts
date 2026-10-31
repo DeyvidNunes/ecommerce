@@ -5,9 +5,9 @@ export default registerAs('app', () => ({
   port: Number(process.env.PORT ?? 3000),
   nodeEnv: process.env.NODE_ENV ?? 'development',
   database: {
-    type: 'mysql' as const,
+    type: 'postgres' as const,
     host: process.env.DATABASE_HOST,
-    port: Number(process.env.DATABASE_PORT ?? 3306),
+    port: Number(process.env.DATABASE_PORT ?? 5432),
     username: process.env.DATABASE_USER,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,

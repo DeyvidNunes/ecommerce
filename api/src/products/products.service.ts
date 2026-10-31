@@ -29,7 +29,7 @@ export class ProductsService {
 
     if (search) {
       qb.andWhere(
-        '(product.name LIKE :search OR product.description LIKE :search)',
+        '(product.name ILIKE :search OR product.description ILIKE :search)',
         { search: `%${search}%` },
       );
     }
