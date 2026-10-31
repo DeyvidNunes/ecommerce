@@ -1,4 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { getDatabaseSsl } from '../config/database-ssl';
 
 // Carrega as variáveis de ambiente do arquivo .env nativamente no Node 20+/24
 try {
@@ -14,6 +15,8 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DATABASE_USER || 'root',
   password: process.env.DATABASE_PASSWORD || '',
   database: process.env.DATABASE_NAME || 'ecommerce',
+  ssl: getDatabaseSsl(),
+  poolSize: Number(process.env.DATABASE_POOL_SIZE ?? 10),
 
   // Aponta para as entidades nos formatos .ts (dev) e .js (build/dist)
   entities: [__dirname + '/../**/*.entity.{ts,js}'],

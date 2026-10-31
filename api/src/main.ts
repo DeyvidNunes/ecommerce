@@ -4,13 +4,20 @@ import type { ConfigType } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import appConfig from './config/app.config';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const config = app.get<ConfigType<typeof appConfig>>(appConfig.KEY);
+
+  if (config.nodeEnv === 'production') {
+    app.set('trust proxy', 1);
+  }
 
   app.enableCors({
     origin: config.frontendUrl,

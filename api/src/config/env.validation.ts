@@ -13,4 +13,11 @@ export const envValidationSchema = Joi.object({
   FRONTEND_URL: Joi.string().uri().required(),
   RESEND_API_KEY: Joi.string().required(),
   MAIL_FROM: Joi.string().required(),
+
+  NODE_ENV: Joi.string()
+    .valid('development', 'production', 'test')
+    .default('development'),
+  DATABASE_SSL: Joi.string().valid('0', '1').default('0'),
+  DATABASE_SSL_CA: Joi.string().allow('').optional(),
+  DATABASE_POOL_SIZE: Joi.number().integer().min(1).default(10),
 });

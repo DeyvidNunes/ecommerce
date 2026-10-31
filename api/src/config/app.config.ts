@@ -1,7 +1,9 @@
 import { registerAs } from '@nestjs/config';
+import { getDatabaseSsl } from './database-ssl';
 
 export default registerAs('app', () => ({
   port: Number(process.env.PORT ?? 3000),
+  nodeEnv: process.env.NODE_ENV ?? 'development',
   database: {
     type: 'mysql' as const,
     host: process.env.DATABASE_HOST,
@@ -10,6 +12,8 @@ export default registerAs('app', () => ({
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
     autoLoadEntities: true,
+    ssl: getDatabaseSsl(),
+    poolSize: Number(process.env.DATABASE_POOL_SIZE ?? 10),
   },
   clerk: {
     secretKey: process.env.CLERK_SECRET_KEY,
