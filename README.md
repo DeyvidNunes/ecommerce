@@ -11,7 +11,7 @@ Projeto de estudo, construído por fases, com foco nos pontos em que um e-commer
 | Área | Tecnologia |
 |---|---|
 | Framework | NestJS, TypeScript |
-| Banco de dados | MySQL, TypeORM |
+| Banco de dados | PostgreSQL, TypeORM |
 | Autenticação | Clerk (validação de JWT no backend) |
 | Pagamentos | Stripe Checkout e webhooks |
 | E-mail | Resend |
@@ -85,7 +85,7 @@ A documentação interativa fica em `http://localhost:3000/api` (Swagger UI), e 
 ### Pré-requisitos
 
 - Node.js 24.9     ou superior
-- MySQL em execução
+- PostgreSQL em execução
 - Contas de teste no [Clerk](https://clerk.com), no [Stripe](https://stripe.com) (modo de teste) e no [Resend](https://resend.com)
 - [Stripe CLI](https://docs.stripe.com/stripe-cli) para receber webhooks localmente
 
@@ -108,7 +108,7 @@ cp .env.example .env
 | Variável | Descrição |
 |---|---|
 | `PORT` | Porta da API (padrão 3000) |
-| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` | Conexão com o MySQL |
+| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` `DATABASE_SSL`, `DATABASE_SSL_CA`, `DATABASE_POOL_SIZE` e `NODE_ENV` | Conexão com o PostgreSQL |
 | `CLERK_SECRET_KEY` | Chave secreta do Clerk |
 | `STRIPE_SECRET_KEY` | Chave secreta do Stripe (modo de teste) |
 | `STRIPE_WEBHOOK_SECRET` | Segredo do webhook (`whsec_...`, impresso pelo `stripe listen`) |
@@ -120,10 +120,10 @@ Confira o `.env.example` para a lista completa e atual. As variáveis são valid
 
 ### Banco de dados
 
-Crie o banco antes de iniciar e rode as migrations para estruturar as tabelas:
+Crie o banco de dados chamado ecommerce
 
 ```sql
-CREATE DATABASE ecommerce CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE ecommerce;
 ```
 ```bash
 npm run migration:run
