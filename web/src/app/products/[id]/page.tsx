@@ -1,12 +1,12 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { Suspense } from 'react'
-import { AddToCartButton } from '@/components/add-to-cart-button'
-import { ApiError } from '@/lib/api-error'
-import { formatPrice } from '@/lib/format'
-import { getProduct } from '@/lib/products'
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { AddToCartButton } from "@/components/add-to-cart-button";
+import { ApiError } from "@/lib/api-error";
+import { formatPrice } from "@/lib/format";
+import { getProduct } from "@/lib/products";
 
-type Params = Promise<{ id: string }>
+type Params = Promise<{ id: string }>;
 
 export default function ProductPage({ params }: { params: Params }) {
   return (
@@ -18,23 +18,23 @@ export default function ProductPage({ params }: { params: Params }) {
         <ProductDetail params={params} />
       </Suspense>
     </main>
-  )
+  );
 }
 
 async function ProductDetail({ params }: { params: Params }) {
-  const { id } = await params
+  const { id } = await params;
 
-  if (!/^\d+$/.test(id)) notFound()
+  if (!/^\d+$/.test(id)) notFound();
 
-  let product
+  let product;
   try {
-    product = await getProduct(id)
+    product = await getProduct(id);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) notFound()
-    throw error
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
   }
 
-  if (!product.active) notFound()
+  if (!product.active) notFound();
 
   return (
     <div className="mt-6 grid gap-8 md:grid-cols-2">
@@ -52,16 +52,18 @@ async function ProductDetail({ params }: { params: Params }) {
         {product.description && (
           <p className="text-gray-700">{product.description}</p>
         )}
-        <p className="text-2xl font-bold">{formatPrice(product.priceInCents)}</p>
+        <p className="text-2xl font-bold">
+          {formatPrice(product.priceInCents)}
+        </p>
         <p className="text-sm text-gray-600">
           {product.stock > 0
             ? `${product.stock} em estoque`
-            : 'Produto esgotado'}
+            : "Produto esgotado"}
         </p>
-        <AddToCartButton productId={product.id} disabled={product.stock === 0} />
+        <AddToCartButton productId={product.id} stock={product.stock} />
       </div>
     </div>
-  )
+  );
 }
 
 function ProductSkeleton() {
@@ -75,5 +77,5 @@ function ProductSkeleton() {
         <div className="h-8 w-32 animate-pulse rounded bg-gray-100" />
       </div>
     </div>
-  )
+  );
 }
