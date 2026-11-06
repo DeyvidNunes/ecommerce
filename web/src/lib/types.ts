@@ -39,3 +39,7 @@ export type Cart = {
   totalInCents: number;
   totalItems: number;
 };
+
+export type CheckoutResponse = {
+  checkoutUrl: string
+}

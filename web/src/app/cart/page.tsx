@@ -1,67 +1,106 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
-import { useApi } from '@/hooks/use-api'
-import { ApiError } from '@/lib/api-error'
-import { formatPrice } from '@/lib/format'
-import type { Cart, CartItem } from '@/lib/types'
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { useApi } from "@/hooks/use-api";
+import { ApiError } from "@/lib/api-error";
+import { formatPrice } from "@/lib/format";
+import type { Cart, CartItem, CheckoutResponse } from "@/lib/types";
 
-const MAX_QUANTITY = 99
+const MAX_QUANTITY = 99;
 
 function errorMessage(error: unknown) {
-  return error instanceof ApiError ? error.message : 'Erro inesperado'
+  return error instanceof ApiError ? error.message : "Erro inesperado";
 }
 
 export default function CartPage() {
-  const api = useApi()
-  const [cart, setCart] = useState<Cart | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [busy, setBusy] = useState<number | 'all' | null>(null)
+  const api = useApi();
+  const [cart, setCart] = useState<Cart | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<number | "all" | "checkout" | null>(null);
 
   const load = useCallback(async () => {
     try {
-      setCart(await api<Cart>('/cart'))
-      setLoadError(null)
+      setCart(await api<Cart>("/cart"));
+      setLoadError(null);
     } catch (error) {
-      setLoadError(errorMessage(error))
+      setLoadError(errorMessage(error));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [api])
+  }, [api]);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
+
+  // Se o usuário voltar do Stripe pelo botão do navegador, destrava a tela
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) setBusy(null);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  async function checkout() {
+    setBusy("checkout");
+    setActionError(null);
+    try {
+      const { checkoutUrl } = await api<CheckoutResponse>("/orders/checkout", {
+        method: "POST",
+      });
+
+      // Só redireciona para o domínio do Stripe
+      if (!new URL(checkoutUrl).hostname.endsWith(".stripe.com")) {
+        throw new Error("URL de pagamento inesperada");
+      }
+
+      window.location.assign(checkoutUrl);
+      // Não destrava o botão: a página vai ser trocada pelo Stripe
+    } catch (error) {
+      setActionError(
+        error instanceof ApiError
+          ? error.status === 429
+            ? "Muitas tentativas seguidas. Aguarde um minuto e tente de novo."
+            : error.message
+          : "Não foi possível iniciar o pagamento.",
+      );
+      setBusy(null);
+    }
+  }
 
   // Executa a mudança e recarrega o carrinho, sem depender do formato da resposta
-  async function mutate(target: number | 'all', request: () => Promise<unknown>) {
-    setBusy(target)
-    setActionError(null)
+  async function mutate(
+    target: number | "all",
+    request: () => Promise<unknown>,
+  ) {
+    setBusy(target);
+    setActionError(null);
     try {
-      await request()
-      await load()
+      await request();
+      await load();
     } catch (error) {
-      setActionError(errorMessage(error))
+      setActionError(errorMessage(error));
     } finally {
-      setBusy(null)
+      setBusy(null);
     }
   }
 
   const changeQuantity = (item: CartItem, quantity: number) =>
     mutate(item.id, () =>
-      api(`/cart/items/${item.id}`, { method: 'PATCH', body: { quantity } }),
-    )
+      api(`/cart/items/${item.id}`, { method: "PATCH", body: { quantity } }),
+    );
 
   const removeItem = (item: CartItem) =>
-    mutate(item.id, () => api(`/cart/items/${item.id}`, { method: 'DELETE' }))
+    mutate(item.id, () => api(`/cart/items/${item.id}`, { method: "DELETE" }));
 
   const clearCart = () => {
-    if (!window.confirm('Esvaziar o carrinho?')) return
-    mutate('all', () => api('/cart', { method: 'DELETE' }))
-  }
+    if (!window.confirm("Esvaziar o carrinho?")) return;
+    mutate("all", () => api("/cart", { method: "DELETE" }));
+  };
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
@@ -70,7 +109,7 @@ export default function CartPage() {
           <h1 className="text-3xl font-bold sm:text-4xl">Seu carrinho</h1>
           {cart && cart.items.length > 0 && (
             <p className="mt-1 text-sm text-slate-500">
-              {cart.totalItems} {cart.totalItems === 1 ? 'item' : 'itens'}
+              {cart.totalItems} {cart.totalItems === 1 ? "item" : "itens"}
             </p>
           )}
         </div>
@@ -102,8 +141,8 @@ export default function CartPage() {
           <p className="mt-2 text-sm text-slate-500">{loadError}</p>
           <button
             onClick={() => {
-              setLoading(true)
-              load()
+              setLoading(true);
+              load();
             }}
             className="btn btn-primary mt-6"
           >
@@ -134,7 +173,7 @@ export default function CartPage() {
                 key={item.id}
                 item={item}
                 disabled={busy !== null}
-                loading={busy === item.id || busy === 'all'}
+                loading={busy === item.id || busy === "all"}
                 onChange={(quantity) => changeQuantity(item, quantity)}
                 onRemove={() => removeItem(item)}
               />
@@ -150,7 +189,9 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-slate-500">Subtotal</dt>
-                <dd className="font-medium">{formatPrice(cart.totalInCents)}</dd>
+                <dd className="font-medium">
+                  {formatPrice(cart.totalInCents)}
+                </dd>
               </div>
             </dl>
             <div className="mt-6 flex items-baseline justify-between border-t border-slate-200/70 pt-6">
@@ -160,12 +201,17 @@ export default function CartPage() {
               </span>
             </div>
             <button
-              disabled
-              title="O checkout entra no próximo passo"
+              onClick={checkout}
+              disabled={busy !== null}
               className="btn btn-primary mt-6 w-full"
             >
-              Finalizar compra
+              {busy === "checkout"
+                ? "Redirecionando para o pagamento…"
+                : "Finalizar compra"}
             </button>
+            <p className="mt-3 text-center text-xs text-slate-400">
+              Pagamento seguro via Stripe (modo de teste)
+            </p>
             <Link
               href="/"
               className="mt-4 block text-center text-sm text-slate-500 transition-all duration-300 hover:text-indigo-600"
@@ -176,7 +222,7 @@ export default function CartPage() {
         </div>
       )}
     </main>
-  )
+  );
 }
 
 function CartRow({
@@ -186,16 +232,16 @@ function CartRow({
   onChange,
   onRemove,
 }: {
-  item: CartItem
-  disabled: boolean
-  loading: boolean
-  onChange: (quantity: number) => void
-  onRemove: () => void
+  item: CartItem;
+  disabled: boolean;
+  loading: boolean;
+  onChange: (quantity: number) => void;
+  onRemove: () => void;
 }) {
   return (
     <li
       className={`card flex gap-4 p-4 hover:shadow-md sm:gap-6 sm:p-6 ${
-        loading ? 'opacity-60' : ''
+        loading ? "opacity-60" : ""
       }`}
     >
       <div
@@ -237,7 +283,10 @@ function CartRow({
             >
               −
             </button>
-            <span className="min-w-10 text-center text-sm font-semibold" aria-live="polite">
+            <span
+              className="min-w-10 text-center text-sm font-semibold"
+              aria-live="polite"
+            >
               {item.quantity}
             </span>
             <button
@@ -250,20 +299,25 @@ function CartRow({
             </button>
           </div>
 
-          <button onClick={onRemove} disabled={disabled} className="btn btn-ghost">
+          <button
+            onClick={onRemove}
+            disabled={disabled}
+            className="btn btn-ghost"
+          >
             Remover
           </button>
         </div>
       </div>
     </li>
-  )
+  );
 }
 
 function CartSkeleton() {
   return (
     <div>
       <p className="mb-4 text-sm text-slate-500">
-        Carregando seu carrinho… (se a API estava dormindo, a primeira vez pode demorar)
+        Carregando seu carrinho… (se a API estava dormindo, a primeira vez pode
+        demorar)
       </p>
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-4">
@@ -273,5 +327,5 @@ function CartSkeleton() {
         <div className="skeleton h-64" />
       </div>
     </div>
-  )
+  );
 }

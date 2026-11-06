@@ -13,8 +13,13 @@ type SearchParams = Promise<{
 
 export default function Home({ searchParams }: { searchParams: SearchParams }) {
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-2xl font-bold">Catálogo</h1>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <section className="mb-8">
+        <h1 className="text-3xl font-bold sm:text-5xl">Catálogo</h1>
+        <p className="mt-2 max-w-xl text-slate-500">
+          Explore os produtos e monte o seu carrinho.
+        </p>
+      </section>
       <Suspense fallback={<CatalogSkeleton />}>
         <Catalog searchParams={searchParams} />
       </Suspense>
@@ -43,31 +48,41 @@ async function Catalog({ searchParams }: { searchParams: SearchParams }) {
 
   return (
     <>
-      <form className="mb-6 flex flex-wrap gap-2">
+      <form className="glass mb-8 flex flex-col gap-2 rounded-2xl p-2 sm:flex-row">
         <input
           name="search"
           defaultValue={search}
           placeholder="Buscar produto"
-          className="min-w-48 flex-1 rounded border px-3 py-2"
+          aria-label="Buscar produto"
+          className="input flex-1"
         />
         <input
           name="category"
           defaultValue={category}
           placeholder="Categoria"
-          className="w-48 rounded border px-3 py-2"
+          aria-label="Categoria"
+          className="input sm:w-56"
         />
-        <button className="rounded bg-black px-4 py-2 text-white">Filtrar</button>
+        <button className="btn btn-primary">Filtrar</button>
         {(search || category) && (
-          <Link href="/" className="px-3 py-2 text-sm text-gray-600 underline">
+          <Link href="/" className="btn btn-secondary">
             Limpar
           </Link>
         )}
       </form>
 
       {products.length === 0 ? (
-        <p className="text-gray-600">Nenhum produto encontrado.</p>
+        <div className="card mx-auto max-w-md p-10 text-center">
+          <h2 className="text-xl font-semibold">Nenhum produto encontrado</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Tente outro termo de busca ou limpe os filtros.
+          </p>
+          <Link href="/" className="btn btn-primary mt-6">
+            Ver todos
+          </Link>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -75,23 +90,30 @@ async function Catalog({ searchParams }: { searchParams: SearchParams }) {
       )}
 
       {meta.totalPages > 1 && (
-        <nav className="mt-8 flex items-center justify-center gap-4">
+        <nav
+          aria-label="Paginação"
+          className="mt-12 flex items-center justify-center gap-4"
+        >
           {meta.page > 1 ? (
-            <Link href={pageHref(meta.page - 1)} className="underline">
-              Anterior
+            <Link href={pageHref(meta.page - 1)} className="btn btn-secondary">
+              ← Anterior
             </Link>
           ) : (
-            <span className="text-gray-400">Anterior</span>
+            <span className="btn btn-secondary pointer-events-none opacity-40">
+              ← Anterior
+            </span>
           )}
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-slate-500">
             Página {meta.page} de {meta.totalPages}
           </span>
           {meta.page < meta.totalPages ? (
-            <Link href={pageHref(meta.page + 1)} className="underline">
-              Próxima
+            <Link href={pageHref(meta.page + 1)} className="btn btn-secondary">
+              Próxima →
             </Link>
           ) : (
-            <span className="text-gray-400">Próxima</span>
+            <span className="btn btn-secondary pointer-events-none opacity-40">
+              Próxima →
+            </span>
           )}
         </nav>
       )}
@@ -102,12 +124,12 @@ async function Catalog({ searchParams }: { searchParams: SearchParams }) {
 function CatalogSkeleton() {
   return (
     <div>
-      <p className="mb-4 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-slate-500">
         Carregando produtos… (se a API estava dormindo, a primeira vez pode demorar)
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-64 animate-pulse rounded-lg bg-gray-100" />
+          <div key={i} className="skeleton h-72" />
         ))}
       </div>
     </div>
