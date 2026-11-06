@@ -1,55 +1,69 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { Suspense } from 'react'
 import {
   ClerkProvider,
   Show,
   SignInButton,
   SignUpButton,
   UserButton,
-} from "@clerk/nextjs";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { Suspense } from "react";
+} from '@clerk/nextjs'
+import { Inter } from 'next/font/google'
+import './globals.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
-  title: "EcommerceX",
-  description: "E-commerce de portfólio",
-};
+  title: 'Loja',
+  description: 'E-commerce de portfólio',
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <ClerkProvider>
       <html lang="pt-BR">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <header className="flex h-16 items-center justify-end gap-4 border-b px-6">
-            <Suspense fallback={null}>
-              <Show when="signed-out">
-                <SignInButton />
-                <SignUpButton />
-              </Show>
-              <Show when="signed-in">
-                <UserButton />
-              </Show>
-            </Suspense>
+        <body className={`${inter.variable} font-sans antialiased`}>
+          <header className="glass sticky top-0 z-40 border-x-0 border-t-0">
+            <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+              <Link
+                href="/"
+                className="bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-xl font-bold tracking-tight text-transparent transition-all duration-300 hover:scale-105"
+              >
+                Loja
+              </Link>
+              <nav className="flex items-center gap-2 sm:gap-4">
+                <Link
+                  href="/cart"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-300 hover:bg-white/70 hover:text-slate-900"
+                >
+                  Carrinho
+                </Link>
+                <Suspense fallback={null}>
+                  <Show when="signed-out">
+                    <SignInButton>
+                      <button className="btn btn-secondary !px-4 !py-2">Entrar</button>
+                    </SignInButton>
+                    <SignUpButton>
+                      <button className="btn btn-primary !px-4 !py-2">Cadastrar</button>
+                    </SignUpButton>
+                  </Show>
+                  <Show when="signed-in">
+                    <UserButton />
+                  </Show>
+                </Suspense>
+              </nav>
+            </div>
           </header>
           {children}
         </body>
       </html>
     </ClerkProvider>
-  );
+  )
 }

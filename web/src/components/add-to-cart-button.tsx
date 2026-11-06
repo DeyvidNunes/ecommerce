@@ -21,6 +21,7 @@ export function AddToCartButton({
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
     null,
   );
+  const maxQuantity = Math.min(stock, 99);
 
   if (stock === 0) {
     return (
@@ -59,11 +60,11 @@ export function AddToCartButton({
         <input
           type="number"
           min={1}
-          max={stock}
+          max={maxQuantity}
           value={quantity}
           onChange={(e) =>
             setQuantity(
-              Math.min(stock, Math.max(1, Number(e.target.value) || 1)),
+              Math.min(maxQuantity, Math.max(1, Number(e.target.value) || 1)),
             )
           }
           className="w-20 rounded border px-2 py-1"
