@@ -4,3 +4,10 @@ export function formatPrice(cents: number) {
     currency: 'BRL',
   }).format(cents / 100)
 }
+
+export function formatDate(iso: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  }).format(new Date(iso))
+}

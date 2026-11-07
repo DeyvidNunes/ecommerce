@@ -12,7 +12,7 @@ export default function ProductPage({ params }: { params: Params }) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <Link
-        href="/"
+        href="/products"
         className="inline-flex items-center gap-2 text-sm text-slate-500 transition-all duration-300 hover:text-indigo-600"
       >
         ← Voltar ao catálogo

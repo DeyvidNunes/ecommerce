@@ -43,3 +43,29 @@ export type Cart = {
 export type CheckoutResponse = {
   checkoutUrl: string
 }
+
+export type OrderSummary = {
+  id: number
+  status: string
+  totalInCents: number
+  createdAt: string
+  items: {
+    id: number
+    productName: string
+    unitPriceInCents: number
+    quantity: number
+  }[]
+}
+
+export type OrderDetail = {
+  id: number
+  status: string
+  totalInCents: number
+  createdAt: string
+  items: {
+    name: string
+    unitPriceInCents: number
+    quantity: number
+    subtotal: number
+  }[]
+}

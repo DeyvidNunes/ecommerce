@@ -1,30 +1,30 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Suspense } from 'react'
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
 import {
   ClerkProvider,
   Show,
   SignInButton,
   SignUpButton,
   UserButton,
-} from '@clerk/nextjs'
-import { Inter } from 'next/font/google'
-import './globals.css'
+} from "@clerk/nextjs";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
 const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin'],
-})
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: 'Loja',
-  description: 'E-commerce de portfólio',
-}
+  title: "Loja",
+  description: "E-commerce de portfólio",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <ClerkProvider>
@@ -40,18 +40,34 @@ export default function RootLayout({
               </Link>
               <nav className="flex items-center gap-2 sm:gap-4">
                 <Link
+                  href="/products"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-300 hover:bg-white/70 hover:text-slate-900"
+                >
+                  Produtos
+                </Link>
+                <Link
                   href="/cart"
                   className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-300 hover:bg-white/70 hover:text-slate-900"
                 >
                   Carrinho
                 </Link>
+                <Link
+                  href="/orders"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-300 hover:bg-white/70 hover:text-slate-900"
+                >
+                  Pedidos
+                </Link>
                 <Suspense fallback={null}>
                   <Show when="signed-out">
                     <SignInButton>
-                      <button className="btn btn-secondary !px-4 !py-2">Entrar</button>
+                      <button className="btn btn-secondary !px-4 !py-2">
+                        Entrar
+                      </button>
                     </SignInButton>
                     <SignUpButton>
-                      <button className="btn btn-primary !px-4 !py-2">Cadastrar</button>
+                      <button className="btn btn-primary !px-4 !py-2">
+                        Cadastrar
+                      </button>
                     </SignUpButton>
                   </Show>
                   <Show when="signed-in">
@@ -62,8 +78,14 @@ export default function RootLayout({
             </div>
           </header>
           {children}
+          <footer className="mt-24 border-t border-slate-200/70">
+            <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:px-6">
+              <span>Loja · projeto de portfólio</span>
+              <span>Next.js · NestJS · Stripe · Clerk</span>
+            </div>
+          </footer>
         </body>
       </html>
     </ClerkProvider>
-  )
+  );
 }

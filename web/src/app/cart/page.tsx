@@ -161,7 +161,7 @@ export default function CartPage() {
           <p className="mt-2 text-sm text-slate-500">
             Que tal explorar o catálogo e escolher algo?
           </p>
-          <Link href="/" className="btn btn-primary mt-6">
+          <Link href="/products" className="btn btn-primary mt-6">
             Ver produtos
           </Link>
         </div>
@@ -213,7 +213,7 @@ export default function CartPage() {
               Pagamento seguro via Stripe (modo de teste)
             </p>
             <Link
-              href="/"
+              href="/products"
               className="mt-4 block text-center text-sm text-slate-500 transition-all duration-300 hover:text-indigo-600"
             >
               Continuar comprando

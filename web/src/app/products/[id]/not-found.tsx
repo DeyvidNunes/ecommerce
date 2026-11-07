@@ -8,7 +8,7 @@ export default function NotFound() {
         <p className="mt-2 text-sm text-slate-500">
           Ele pode ter sido removido ou o endereço está errado.
         </p>
-        <Link href="/" className="btn btn-primary mt-6">
+        <Link href="/products" className="btn btn-primary mt-6">
           Voltar ao catálogo
         </Link>
       </div>
