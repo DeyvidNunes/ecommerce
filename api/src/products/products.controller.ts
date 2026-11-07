@@ -35,6 +35,26 @@ export class ProductsController {
     return this.productsService.findAll(query);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lista produtos, inclusive desativados (admin)' })
+  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('admin')
+  findAllForAdmin(@Query() query: QueryProductsDto) {
+    return this.productsService.findAllForAdmin(query);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Busca um produto pelo id, inclusive desativado (admin)',
+  })
+  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('admin/:id')
+  findOneForAdmin(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.findOne(id);
+  }
+
   @ApiOperation({ summary: 'Busca um produto ativo pelo id' })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
