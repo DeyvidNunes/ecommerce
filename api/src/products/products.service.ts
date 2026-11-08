@@ -5,12 +5,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { Repository } from 'typeorm';
 import { QueryProductsDto } from './dto/query-products.dto';
+import { randomUUID } from 'node:crypto';
+import { BadRequestException, Logger } from '@nestjs/common';
+import { StorageService } from '../storage/storage.service';
+import { detectImageType } from './image-type';
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
+    private readonly storage: StorageService,
   ) {}
 
   create(createProductDto: CreateProductDto) {
@@ -97,5 +103,40 @@ export class ProductsService {
 
     product.active = false;
     await this.productsRepository.save(product);
+  }
+
+    async setImage(id: number, file: Express.Multer.File | undefined) {
+    if (!file) {
+      throw new BadRequestException('Envie um arquivo no campo "file"');
+    }
+
+    const type = detectImageType(file.buffer);
+    if (!type) {
+      throw new BadRequestException(
+        'Formato inválido. Envie uma imagem JPEG, PNG ou WebP',
+      );
+    }
+
+    const product = await this.findOne(id);
+    const previousUrl = product.imageUrl;
+
+    const path = `products/${id}/${randomUUID()}.${type.ext}`;
+    const url = await this.storage.upload(path, file.buffer, type.mime);
+
+    product.imageUrl = url;
+    try {
+      await this.productsRepository.save(product);
+    } catch (error) {
+      // O produto não foi atualizado: remove o arquivo recém-enviado
+      await this.storage.removeByUrl(url);
+      throw error;
+    }
+
+    // Troca concluída: o arquivo antigo (se for do nosso bucket) não serve mais
+    if (previousUrl && previousUrl !== url) {
+      await this.storage.removeByUrl(previousUrl);
+    }
+
+    return product;
   }
 }

@@ -13,6 +13,9 @@ export const envValidationSchema = Joi.object({
   FRONTEND_URL: Joi.string().uri().required(),
   RESEND_API_KEY: Joi.string().required(),
   MAIL_FROM: Joi.string().required(),
+  SUPABASE_URL: Joi.string().uri().required(),
+  SUPABASE_SECRET_KEY: Joi.string().required(),
+  SUPABASE_STORAGE_BUCKET: Joi.string().default('product-images'),
 
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
