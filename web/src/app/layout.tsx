@@ -11,6 +11,8 @@ import {
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import { AdminLink } from "@/components/admin-link";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -71,6 +73,10 @@ export default function RootLayout({
                     </SignUpButton>
                   </Show>
                   <Show when="signed-in">
+                    <Show when="signed-in">
+                      <AdminLink />
+                      <UserButton />
+                    </Show>
                     <UserButton />
                   </Show>
                 </Suspense>

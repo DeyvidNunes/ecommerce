@@ -69,3 +69,8 @@ export type OrderDetail = {
     subtotal: number
   }[]
 }
+
+export type CurrentUser = {
+  id: number
+  role: string
+}
