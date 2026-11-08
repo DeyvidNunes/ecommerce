@@ -18,10 +18,23 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  async findAll({ page, limit, search, category }: QueryProductsDto) {
-    const qb = this.productsRepository
-      .createQueryBuilder('product')
-      .where('product.active = :active', { active: true });
+  findAll(query: QueryProductsDto) {
+    return this.search(query, false);
+  }
+
+  findAllForAdmin(query: QueryProductsDto) {
+    return this.search(query, true);
+  }
+
+  async search(
+    { page, limit, search, category }: QueryProductsDto,
+    includeInactive: boolean,
+  ) {
+    const qb = this.productsRepository.createQueryBuilder('product');
+
+    if (!includeInactive) {
+      qb.andWhere('product.active = :active', { active: true });
+    }
 
     if (category) {
       qb.andWhere('product.category = :category', { category });
