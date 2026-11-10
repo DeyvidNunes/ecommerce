@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ProductImage } from '@/components/product-image'
 import { formatPrice } from '@/lib/format'
 import type { Product } from '@/lib/types'
 
@@ -10,13 +11,14 @@ export function ProductCard({ product }: { product: Product }) {
       href={`/products/${product.id}`}
       className="card group flex flex-col overflow-hidden hover:scale-[1.02] hover:shadow-md"
     >
-      <div className="relative grid h-44 place-items-center bg-gradient-to-br from-indigo-500 to-violet-500">
-        <span
-          aria-hidden
-          className="text-5xl font-bold text-white/90 transition-all duration-300 group-hover:scale-110"
-        >
-          {product.name.charAt(0).toUpperCase()}
-        </span>
+      <div className="relative">
+        <ProductImage
+          src={product.imageUrl}
+          name={product.name}
+          alt=""
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+          className="h-44"
+        />
         {soldOut && (
           <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-rose-600 backdrop-blur">
             Esgotado

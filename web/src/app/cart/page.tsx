@@ -6,6 +6,7 @@ import { useApi } from "@/hooks/use-api";
 import { ApiError } from "@/lib/api-error";
 import { formatPrice } from "@/lib/format";
 import type { Cart, CartItem, CheckoutResponse } from "@/lib/types";
+import { ProductImage } from "@/components/product-image";
 
 const MAX_QUANTITY = 99;
 
@@ -244,12 +245,14 @@ function CartRow({
         loading ? "opacity-60" : ""
       }`}
     >
-      <div
-        aria-hidden
-        className="grid h-20 w-20 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-2xl font-bold text-white sm:h-24 sm:w-24"
-      >
-        {item.product.name.charAt(0).toUpperCase()}
-      </div>
+      <ProductImage
+        src={item.product.imageUrl}
+        name={item.product.name}
+        alt=""
+        sizes="96px"
+        className="h-20 w-20 shrink-0 rounded-2xl sm:h-24 sm:w-24"
+        letterClassName="text-2xl"
+      />
 
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-4">
         <div className="flex items-start justify-between gap-4">

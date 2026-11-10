@@ -1,60 +1,61 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
-import { useApi } from '@/hooks/use-api'
-import { ApiError } from '@/lib/api-error'
-import { formatPrice } from '@/lib/format'
-import type { Paginated, Product } from '@/lib/types'
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { useApi } from "@/hooks/use-api";
+import { ApiError } from "@/lib/api-error";
+import { formatPrice } from "@/lib/format";
+import type { Paginated, Product } from "@/lib/types";
+import { ProductImage } from "@/components/product-image";
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 10;
 
 function errorMessage(error: unknown) {
-  return error instanceof ApiError ? error.message : 'Erro inesperado'
+  return error instanceof ApiError ? error.message : "Erro inesperado";
 }
 
 export default function AdminProductsPage() {
-  const api = useApi()
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [result, setResult] = useState<Paginated<Product> | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [busyId, setBusyId] = useState<number | null>(null)
+  const api = useApi();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [result, setResult] = useState<Paginated<Product> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     const query = new URLSearchParams({
       page: String(page),
       limit: String(PAGE_SIZE),
-    })
-    if (search) query.set('search', search)
+    });
+    if (search) query.set("search", search);
 
     try {
-      setResult(await api<Paginated<Product>>(`/products/admin?${query}`))
-      setError(null)
+      setResult(await api<Paginated<Product>>(`/products/admin?${query}`));
+      setError(null);
     } catch (e) {
-      setError(errorMessage(e))
+      setError(errorMessage(e));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [api, page, search])
+  }, [api, page, search]);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
 
   function goTo(target: number) {
-    setLoading(true)
-    setPage(target)
+    setLoading(true);
+    setPage(target);
   }
 
   function applySearch(event: React.FormEvent) {
-    event.preventDefault()
-    setLoading(true)
-    setPage(1)
-    setSearch(searchInput.trim())
+    event.preventDefault();
+    setLoading(true);
+    setPage(1);
+    setSearch(searchInput.trim());
   }
 
   async function toggleActive(product: Product) {
@@ -62,32 +63,35 @@ export default function AdminProductsPage() {
       product.active &&
       !window.confirm(`Desativar "${product.name}"? Ele some do catálogo.`)
     ) {
-      return
+      return;
     }
 
-    setBusyId(product.id)
-    setActionError(null)
+    setBusyId(product.id);
+    setActionError(null);
     try {
       if (product.active) {
-        await api(`/products/${product.id}`, { method: 'DELETE' })
+        await api(`/products/${product.id}`, { method: "DELETE" });
       } else {
         await api(`/products/${product.id}`, {
-          method: 'PATCH',
+          method: "PATCH",
           body: { active: true },
-        })
+        });
       }
-      await load()
+      await load();
     } catch (e) {
-      setActionError(errorMessage(e))
+      setActionError(errorMessage(e));
     } finally {
-      setBusyId(null)
+      setBusyId(null);
     }
   }
 
   return (
     <section>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <form onSubmit={applySearch} className="glass flex flex-1 gap-2 rounded-2xl p-2 sm:max-w-md">
+        <form
+          onSubmit={applySearch}
+          className="glass flex flex-1 gap-2 rounded-2xl p-2 sm:max-w-md"
+        >
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -123,8 +127,8 @@ export default function AdminProductsPage() {
           <p className="mt-2 text-sm text-slate-500">{error}</p>
           <button
             onClick={() => {
-              setLoading(true)
-              load()
+              setLoading(true);
+              load();
             }}
             className="btn btn-primary mt-6"
           >
@@ -156,21 +160,33 @@ export default function AdminProductsPage() {
                   <tr
                     key={product.id}
                     className={`transition-all duration-300 hover:bg-slate-50 ${
-                      busyId === product.id ? 'opacity-60' : ''
+                      busyId === product.id ? "opacity-60" : ""
                     }`}
                   >
                     <td className="px-6 py-4">
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {product.category ?? 'Sem categoria'}
-                      </p>
+                      <div className="flex items-center gap-4">
+                        <ProductImage
+                          src={product.imageUrl}
+                          name={product.name}
+                          alt=""
+                          sizes="48px"
+                          className="h-12 w-12 shrink-0 rounded-xl"
+                          letterClassName="text-lg"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {product.category ?? "Sem categoria"}
+                          </p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 font-medium">
                       {formatPrice(product.priceInCents)}
                     </td>
                     <td
                       className={`px-6 py-4 ${
-                        product.stock === 0 ? 'font-semibold text-rose-600' : ''
+                        product.stock === 0 ? "font-semibold text-rose-600" : ""
                       }`}
                     >
                       {product.stock}
@@ -179,11 +195,11 @@ export default function AdminProductsPage() {
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${
                           product.active
-                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-                            : 'bg-slate-100 text-slate-600 ring-slate-200'
+                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                            : "bg-slate-100 text-slate-600 ring-slate-200"
                         }`}
                       >
-                        {product.active ? 'Ativo' : 'Desativado'}
+                        {product.active ? "Ativo" : "Desativado"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -199,7 +215,7 @@ export default function AdminProductsPage() {
                           disabled={busyId !== null}
                           className="btn btn-ghost"
                         >
-                          {product.active ? 'Desativar' : 'Reativar'}
+                          {product.active ? "Desativar" : "Reativar"}
                         </button>
                       </div>
                     </td>
@@ -236,5 +252,5 @@ export default function AdminProductsPage() {
         </>
       )}
     </section>
-  )
+  );
 }
