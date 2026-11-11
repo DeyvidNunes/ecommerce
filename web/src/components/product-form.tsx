@@ -1,65 +1,119 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { useApi } from '@/hooks/use-api'
-import { ApiError } from '@/lib/api-error'
-import { centsToInput, parsePriceToCents } from '@/lib/format'
-import type { Product } from '@/lib/types'
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ProductImage } from "@/components/product-image";
+import { useApi } from "@/hooks/use-api";
+import { ApiError } from "@/lib/api-error";
+import { centsToInput, parsePriceToCents } from "@/lib/format";
+import { compressImage, ImageError } from "@/lib/image-compress";
+import type { Product } from "@/lib/types";
 
-const MAX_STOCK = 1_000_000
+const MAX_STOCK = 1_000_000;
 
 export function ProductForm({ product }: { product?: Product }) {
-  const router = useRouter()
-  const api = useApi()
+  const router = useRouter();
+  const api = useApi();
 
-  const [name, setName] = useState(product?.name ?? '')
-  const [description, setDescription] = useState(product?.description ?? '')
+  const [name, setName] = useState(product?.name ?? "");
+  const [description, setDescription] = useState(product?.description ?? "");
   const [price, setPrice] = useState(
-    product ? centsToInput(product.priceInCents) : '',
-  )
-  const [stock, setStock] = useState(product ? String(product.stock) : '0')
-  const [category, setCategory] = useState(product?.category ?? '')
-  const [active, setActive] = useState(product?.active ?? true)
+    product ? centsToInput(product.priceInCents) : "",
+  );
+  const [stock, setStock] = useState(product ? String(product.stock) : "0");
+  const [category, setCategory] = useState(product?.category ?? "");
+  const [active, setActive] = useState(product?.active ?? true);
 
-  const [submitted, setSubmitted] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [createdId, setCreatedId] = useState<number | null>(null);
 
-  const priceInCents = parsePriceToCents(price)
-  const stockNumber = Number(stock)
+  const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Libera a memória da prévia quando ela muda ou o formulário fecha
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  const priceInCents = parsePriceToCents(price);
+  const stockNumber = Number(stock);
 
   const errors = {
     name: !name.trim()
-      ? 'Informe o nome'
+      ? "Informe o nome"
       : name.length > 150
-        ? 'Máximo de 150 caracteres'
+        ? "Máximo de 150 caracteres"
         : null,
     price:
-      priceInCents === null ? 'Informe um preço válido, por exemplo 49,90' : null,
+      priceInCents === null
+        ? "Informe um preço válido, por exemplo 49,90"
+        : null,
     stock:
-      stock.trim() === '' ||
+      stock.trim() === "" ||
       !Number.isInteger(stockNumber) ||
       stockNumber < 0 ||
       stockNumber > MAX_STOCK
         ? `Informe um número inteiro de 0 a ${MAX_STOCK}`
         : null,
-    category: category.length > 80 ? 'Máximo de 80 caracteres' : null,
+    category: category.length > 80 ? "Máximo de 80 caracteres" : null,
+  };
+  const hasErrors = Object.values(errors).some(Boolean);
+
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // permite escolher o mesmo arquivo de novo
+    if (!file) return;
+
+    setImageError(null);
+    setProcessing(true);
+    try {
+      const compressed = await compressImage(file);
+      setImage(compressed);
+      setPreview(URL.createObjectURL(compressed));
+    } catch (e) {
+      setImageError(
+        e instanceof ImageError
+          ? e.message
+          : "Não foi possível processar a imagem",
+      );
+    } finally {
+      setProcessing(false);
+    }
   }
-  const hasErrors = Object.values(errors).some(Boolean)
+
+  function clearImage() {
+    setImage(null);
+    setPreview(null);
+    setImageError(null);
+  }
+
+  async function uploadImage(id: number, file: File) {
+    const body = new FormData();
+    body.append("file", file);
+    await api<Product>(`/products/${id}/image`, { method: "POST", body });
+  }
 
   async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    setSubmitted(true)
-    setFormError(null)
-    if (hasErrors || priceInCents === null) return
+    event.preventDefault();
+    setSubmitted(true);
+    setFormError(null);
+    if (hasErrors || priceInCents === null) return;
 
-    setSaving(true)
+    setSaving(true);
+    let id = product?.id ?? createdId;
+    let step: "dados" | "imagem" = "dados";
+
     try {
       if (product) {
         await api(`/products/${product.id}`, {
-          method: 'PATCH',
+          method: "PATCH",
           body: {
             name: name.trim(),
             description: description.trim(),
@@ -68,10 +122,10 @@ export function ProductForm({ product }: { product?: Product }) {
             category: category.trim(),
             active,
           },
-        })
-      } else {
-        await api('/products', {
-          method: 'POST',
+        });
+      } else if (createdId === null) {
+        const created = await api<Product>("/products", {
+          method: "POST",
           body: {
             name: name.trim(),
             ...(description.trim() && { description: description.trim() }),
@@ -79,24 +133,53 @@ export function ProductForm({ product }: { product?: Product }) {
             stock: stockNumber,
             ...(category.trim() && { category: category.trim() }),
           },
-        })
+        });
+        id = created.id;
+        setCreatedId(created.id);
       }
-      router.push('/admin') // mantém o botão travado até a navegação
+
+      if (image && id !== null) {
+        step = "imagem";
+        await uploadImage(id, image);
+      }
+
+      router.push("/admin"); // mantém o botão travado até a navegação
     } catch (e) {
-      setFormError(e instanceof ApiError ? e.message : 'Erro inesperado')
-      setSaving(false)
+      const message = e instanceof ApiError ? e.message : "Erro inesperado";
+      setFormError(
+        step === "imagem"
+          ? `${product ? "Dados salvos" : "Produto criado"}, mas a imagem não foi enviada: ${message}`
+          : message,
+      );
+      setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="card space-y-6 p-6 sm:p-8">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="card space-y-6 p-6 sm:p-8"
+    >
       {formError && (
-        <p
+        <div
           role="alert"
           className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
         >
-          {formError}
-        </p>
+          <p>{formError}</p>
+          {createdId !== null && (
+            <p className="mt-2">
+              Você pode tentar de novo ou{" "}
+              <Link
+                href={`/admin/products/${createdId}`}
+                className="font-semibold underline"
+              >
+                abrir o produto para editar
+              </Link>
+              .
+            </p>
+          )}
+        </div>
       )}
 
       <Field
@@ -174,6 +257,72 @@ export function ProductForm({ product }: { product?: Product }) {
         />
       </Field>
 
+      <div className="space-y-2">
+        <span className="text-sm font-medium">Imagem (opcional)</span>
+        <div className="flex flex-wrap items-center gap-4">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={preview}
+              alt="Prévia da nova imagem"
+              className="h-24 w-24 shrink-0 rounded-2xl object-cover"
+            />
+          ) : (
+            <ProductImage
+              src={product?.imageUrl ?? null}
+              name={name.trim() || "Produto"}
+              alt=""
+              sizes="96px"
+              className="h-24 w-24 shrink-0 rounded-2xl"
+              letterClassName="text-3xl"
+            />
+          )}
+
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <label className="btn btn-secondary cursor-pointer has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-indigo-500">
+                {processing
+                  ? "Processando…"
+                  : image
+                    ? "Trocar imagem"
+                    : "Escolher imagem"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleFile}
+                  disabled={processing || saving}
+                  className="sr-only"
+                />
+              </label>
+              {image && (
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  disabled={saving}
+                  className="btn btn-ghost"
+                >
+                  Remover seleção
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-slate-500">
+              {image
+                ? `Imagem pronta (${Math.max(1, Math.round(image.size / 1024))} KB). ${
+                    product?.imageUrl
+                      ? "A imagem atual será substituída ao salvar."
+                      : ""
+                  }`
+                : "JPEG, PNG ou WebP. A imagem é reduzida automaticamente."}
+            </p>
+          </div>
+        </div>
+        {imageError && (
+          <p role="alert" className="text-sm text-rose-600">
+            {imageError}
+          </p>
+        )}
+      </div>
+
       {product && (
         <label className="flex cursor-pointer items-center gap-3 text-sm">
           <input
@@ -190,16 +339,22 @@ export function ProductForm({ product }: { product?: Product }) {
         <Link href="/admin" className="btn btn-secondary">
           Cancelar
         </Link>
-        <button type="submit" disabled={saving} className="btn btn-primary">
+        <button
+          type="submit"
+          disabled={saving || processing}
+          className="btn btn-primary"
+        >
           {saving
-            ? 'Salvando…'
-            : product
-              ? 'Salvar alterações'
-              : 'Criar produto'}
+            ? "Salvando…"
+            : createdId !== null
+              ? "Tentar enviar a imagem de novo"
+              : product
+                ? "Salvar alterações"
+                : "Criar produto"}
         </button>
       </div>
     </form>
-  )
+  );
 }
 
 function Field({
@@ -209,11 +364,11 @@ function Field({
   hint,
   children,
 }: {
-  label: string
-  htmlFor: string
-  error?: string | null
-  hint?: string
-  children: React.ReactNode
+  label: string;
+  htmlFor: string;
+  error?: string | null;
+  hint?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
@@ -230,5 +385,5 @@ function Field({
         </p>
       )}
     </div>
-  )
+  );
 }
