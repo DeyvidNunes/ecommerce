@@ -1,12 +1,13 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { Suspense } from 'react'
-import { AddToCartButton } from '@/components/add-to-cart-button'
-import { ApiError } from '@/lib/api-error'
-import { formatPrice } from '@/lib/format'
-import { getProduct } from '@/lib/products'
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { AddToCartButton } from "@/components/add-to-cart-button";
+import { ApiError } from "@/lib/api-error";
+import { formatPrice } from "@/lib/format";
+import { getProduct } from "@/lib/products";
+import { ProductImage } from "@/components/product-image";
 
-type Params = Promise<{ id: string }>
+type Params = Promise<{ id: string }>;
 
 export default function ProductPage({ params }: { params: Params }) {
   return (
@@ -21,38 +22,40 @@ export default function ProductPage({ params }: { params: Params }) {
         <ProductDetail params={params} />
       </Suspense>
     </main>
-  )
+  );
 }
 
 async function ProductDetail({ params }: { params: Params }) {
-  const { id } = await params
+  const { id } = await params;
 
-  if (!/^\d+$/.test(id)) notFound()
+  if (!/^\d+$/.test(id)) notFound();
 
-  let product
+  let product;
   try {
-    product = await getProduct(id)
+    product = await getProduct(id);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) notFound()
-    throw error
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
   }
 
-  if (!product.active) notFound()
+  if (!product.active) notFound();
 
   const stockLabel =
     product.stock === 0
-      ? { text: 'Produto esgotado', dot: 'bg-rose-500' }
+      ? { text: "Produto esgotado", dot: "bg-rose-500" }
       : product.stock <= 5
-        ? { text: `Restam apenas ${product.stock}`, dot: 'bg-amber-500' }
-        : { text: `${product.stock} em estoque`, dot: 'bg-emerald-500' }
+        ? { text: `Restam apenas ${product.stock}`, dot: "bg-amber-500" }
+        : { text: `${product.stock} em estoque`, dot: "bg-emerald-500" };
 
   return (
     <div className="mt-8 grid items-start gap-8 md:grid-cols-2 lg:gap-12">
-      <div className="card grid aspect-square place-items-center overflow-hidden bg-gradient-to-br from-indigo-500 to-violet-500">
-        <span aria-hidden className="text-8xl font-bold text-white/90">
-          {product.name.charAt(0).toUpperCase()}
-        </span>
-      </div>
+      <ProductImage
+        src={product.imageUrl}
+        name={product.name}
+        sizes="(min-width: 768px) 50vw, 100vw"
+        className="card aspect-square"
+        letterClassName="text-8xl"
+      />
 
       <div className="flex flex-col gap-4">
         {product.category && (
@@ -68,13 +71,16 @@ async function ProductDetail({ params }: { params: Params }) {
           {formatPrice(product.priceInCents)}
         </p>
         <p className="flex items-center gap-2 text-sm text-slate-600">
-          <span aria-hidden className={`h-2 w-2 rounded-full ${stockLabel.dot}`} />
+          <span
+            aria-hidden
+            className={`h-2 w-2 rounded-full ${stockLabel.dot}`}
+          />
           {stockLabel.text}
         </p>
         <AddToCartButton productId={product.id} stock={product.stock} />
       </div>
     </div>
-  )
+  );
 }
 
 function ProductSkeleton() {
@@ -88,5 +94,5 @@ function ProductSkeleton() {
         <div className="skeleton h-12 w-40" />
       </div>
     </div>
-  )
+  );
 }

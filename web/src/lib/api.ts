@@ -21,13 +21,17 @@ export async function apiFetch<T>(
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
+    const isForm = body instanceof FormData;
+
     const response = await fetch(`${API_URL}${path}`, {
       method,
       headers: {
-        ...(body !== undefined && { "Content-Type": "application/json" }),
+        ...(body !== undefined &&
+          !isForm && { "Content-Type": "application/json" }),
         ...(token && { Authorization: `Bearer ${token}` }),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body:
+        body === undefined ? undefined : isForm ? body : JSON.stringify(body),
       signal: controller.signal,
     });
 
