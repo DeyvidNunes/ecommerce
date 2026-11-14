@@ -122,7 +122,40 @@ export class PaymentsService {
       return;
     }
 
-    await this.ordersService.processOrderPayment(orderId);
+    const result = await this.ordersService.processOrderPayment(orderId);
+
+    if (result === 'OUT_OF_STOCK') {
+      await this.refundOutOfStockOrder(orderId, session);
+    }
+  }
+
+  private async refundOutOfStockOrder(
+    orderId: number,
+    session: Stripe.Checkout.Session,
+  ) {
+    const paymentIntentId =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id;
+
+    if (paymentIntentId) {
+      await this.stripe.refunds.create(
+        {
+          payment_intent: paymentIntentId,
+          metadata: { orderId: String(orderId), reason: 'out_of_stock' },
+        },
+        { idempotencyKey: `refund-order-${orderId}` },
+      );
+      this.logger.warn(
+        `Pedido ${orderId} reembolsado automaticamente: produto sem estoque.`,
+      );
+    } else {
+      this.logger.error(
+        `Pedido ${orderId} sem estoque e sem payment_intent: reembolse manualmente no painel do Stripe.`,
+      );
+    }
+
+    await this.ordersService.cancelPendingOrder(orderId);
   }
 
   private async sessionCanceled(session: Stripe.Checkout.Session) {

@@ -19,6 +19,7 @@ import { Product } from '../products/entities/product.entity';
 import { Cart } from '../cart/entities/cart.entity';
 import { CartItem } from '../cart/entities/cart-item.entity';
 import { MailService } from '../mail/mail.service';
+import { PaymentProcessingResult } from './payment-result';
 
 @Injectable()
 export class OrdersService {
@@ -173,7 +174,7 @@ export class OrdersService {
     };
   }
 
-  async processOrderPayment(orderId: number): Promise<void> {
+  async processOrderPayment(orderId: number): Promise<PaymentProcessingResult> {
     const queryRunner = this.dataSource.createQueryRunner();
     let paidOrder: Order | null = null;
 
@@ -197,7 +198,7 @@ export class OrdersService {
           `[Idempotência] Pedido ${orderId} já processado ou não está pendente.`,
         );
         await queryRunner.rollbackTransaction();
-        return;
+        return 'ALREADY_PROCESSED';
       }
 
       const order = await queryRunner.manager.findOne(Order, {
@@ -209,9 +210,7 @@ export class OrdersService {
         throw new Error(`Pedido ${orderId} não encontrado após atualização`);
       }
 
-      paidOrder = order;
-
-      // Baixa de estoque condicional
+      // Baixa condicional: se um item não tem saldo, desfaz TUDO
       for (const item of order.items) {
         const stockResult = await queryRunner.manager
           .createQueryBuilder()
@@ -225,8 +224,10 @@ export class OrdersService {
 
         if ((stockResult.affected ?? 0) === 0) {
           this.logger.error(
-            `[ALERTA DE ESTOQUE] Pedido ${orderId} pago, mas o produto ${item.product.id} não tinha estoque suficiente`,
+            `[SEM ESTOQUE] Pedido ${orderId}: produto ${item.product.id} sem saldo suficiente. Transação desfeita.`,
           );
+          await queryRunner.rollbackTransaction();
+          return 'OUT_OF_STOCK';
         }
       }
 
@@ -245,6 +246,7 @@ export class OrdersService {
       }
 
       await queryRunner.commitTransaction();
+      paidOrder = order;
       this.logger.log(`Pagamento do pedido ${orderId} confirmado com sucesso.`);
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -260,6 +262,8 @@ export class OrdersService {
     if (paidOrder) {
       await this.sendConfirmationEmail(paidOrder);
     }
+
+    return 'PAID';
   }
 
   private async sendConfirmationEmail(order: Order): Promise<void> {
