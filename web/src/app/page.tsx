@@ -1,15 +1,15 @@
-import Link from 'next/link'
-import { Suspense } from 'react'
-import { ProductCard } from '@/components/product-card'
-import { getProducts } from '@/lib/products'
+import Link from "next/link";
+import { Suspense } from "react";
+import { ProductCard } from "@/components/product-card";
+import { getProducts } from "@/lib/products";
 
 const HIGHLIGHTS = [
-  'Pagamento via Stripe',
-  'Login seguro com Clerk',
-  'Carrinho sempre atualizado',
-  'Confirmação por e-mail',
-  'Estoque conferido a cada compra',
-]
+  "Pagamento via Stripe",
+  "Login seguro com Clerk",
+  "Carrinho sempre atualizado",
+  "Confirmação por e-mail",
+  "Estoque conferido a cada compra",
+];
 
 export default function Home() {
   return (
@@ -40,7 +40,7 @@ export default function Home() {
       <Bento />
       <FinalCta />
     </main>
-  )
+  );
 }
 
 /* ---------- Hero ---------- */
@@ -52,11 +52,11 @@ function Hero() {
         <div className="blob -left-24 -top-24 h-96 w-96 bg-indigo-400" />
         <div
           className="blob -right-16 top-10 h-[28rem] w-[28rem] bg-violet-400"
-          style={{ animationDelay: '-6s' }}
+          style={{ animationDelay: "-6s" }}
         />
         <div
           className="blob bottom-0 left-1/3 h-72 w-72 bg-pink-300"
-          style={{ animationDelay: '-12s' }}
+          style={{ animationDelay: "-12s" }}
         />
       </div>
 
@@ -68,7 +68,7 @@ function Hero() {
           </span>
 
           <h1 className="mt-6 text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-            Seu próximo favorito está{' '}
+            Seu próximo favorito está{" "}
             <span className="text-gradient">a um clique</span>.
           </h1>
 
@@ -78,35 +78,43 @@ function Hero() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
-            <Link href="/products" className="btn btn-primary !px-8 !py-4 text-base">
+            <Link
+              href="/products"
+              className="btn btn-primary !px-8 !py-4 text-base"
+            >
               Ver produtos →
             </Link>
-            <Link href="/orders" className="btn btn-secondary !px-8 !py-4 text-base">
+            <Link
+              href="/orders"
+              className="btn btn-secondary !px-8 !py-4 text-base"
+            >
               Meus pedidos
             </Link>
           </div>
 
           <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
-            {['Pagamento via Stripe', 'Login com Clerk', 'Confirmação por e-mail'].map(
-              (item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span
-                    aria-hidden
-                    className="grid h-5 w-5 place-items-center rounded-full bg-emerald-100 text-xs text-emerald-700"
-                  >
-                    ✓
-                  </span>
-                  {item}
-                </li>
-              ),
-            )}
+            {[
+              "Pagamento via Stripe",
+              "Login com Clerk",
+              "Confirmação por e-mail",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <span
+                  aria-hidden
+                  className="grid h-5 w-5 place-items-center rounded-full bg-emerald-100 text-xs text-emerald-700"
+                >
+                  ✓
+                </span>
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
 
         <HeroVisual />
       </div>
     </section>
-  )
+  );
 }
 
 function HeroVisual() {
@@ -154,13 +162,13 @@ function HeroVisual() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 /* ---------- Faixa rolante ---------- */
 
 function HighlightsStrip() {
-  const items = [...HIGHLIGHTS, ...HIGHLIGHTS]
+  const items = [...HIGHLIGHTS, ...HIGHLIGHTS];
   return (
     <div
       className="marquee overflow-hidden border-y border-slate-200/70 bg-white/60 py-4 backdrop-blur"
@@ -181,29 +189,35 @@ function HighlightsStrip() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 /* ---------- Novidades ---------- */
 
 async function Featured() {
-  const { data } = await getProducts({ limit: 4 })
+  const { data } = await getProducts({ limit: 4 });
 
   if (data.length === 0) {
     return (
       <p className="text-slate-500">
         Nenhum produto cadastrado ainda. Volte em breve.
       </p>
-    )
+    );
   }
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {data.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {data.map((product, index) => (
+        <div
+          key={product.id}
+          className="animate-fade-up"
+          style={{ animationDelay: `${index * 80}ms` }}
+        >
+          <ProductCard product={product} />
+        </div>
       ))}
     </div>
-  )
+  );
 }
 
 function FeaturedSkeleton() {
@@ -213,7 +227,7 @@ function FeaturedSkeleton() {
         <div key={i} className="skeleton h-72" />
       ))}
     </div>
-  )
+  );
 }
 
 /* ---------- Grade bento ---------- */
@@ -266,7 +280,8 @@ function Bento() {
           </span>
           <h3 className="mt-6 text-xl font-semibold">Conta protegida</h3>
           <p className="mt-2 text-sm text-slate-500">
-            Login e cadastro pelo Clerk. Seu carrinho e seus pedidos são só seus.
+            Login e cadastro pelo Clerk. Seu carrinho e seus pedidos são só
+            seus.
           </p>
         </div>
 
@@ -302,7 +317,7 @@ function Bento() {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 /* ---------- Chamada final ---------- */
@@ -316,7 +331,8 @@ function FinalCta() {
           <div className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-violet-500/40 blur-3xl" />
         </div>
         <h2 className="mx-auto max-w-2xl text-3xl font-bold sm:text-5xl">
-          Pronto para fazer um <span className="text-gradient">pedido de teste</span>?
+          Pronto para fazer um{" "}
+          <span className="text-gradient">pedido de teste</span>?
         </h2>
         <p className="mx-auto mt-4 max-w-md text-white/70">
           Escolha um produto, finalize com o cartão de teste e veja o status
@@ -330,5 +346,5 @@ function FinalCta() {
         </Link>
       </div>
     </section>
-  )
+  );
 }

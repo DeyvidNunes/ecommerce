@@ -1,13 +1,15 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { ProductCard } from '@/components/product-card'
 import { getProducts } from '@/lib/products'
 
+export const metadata: Metadata = { title: 'Produtos' }
+
 const PAGE_SIZE = 12
 
 type SearchParams = Promise<{
   search?: string
-  category?: string
   page?: string
 }>
 
@@ -32,54 +34,68 @@ export default function ProductsPage({
 }
 
 async function Catalog({ searchParams }: { searchParams: SearchParams }) {
-  const { search = '', category = '', page: pageParam } = await searchParams
+  const { search = '', page: pageParam } = await searchParams
   const page = Math.max(1, Number(pageParam) || 1)
 
   const { data: products, meta } = await getProducts({
     page,
     limit: PAGE_SIZE,
     search,
-    category,
   })
 
   function pageHref(target: number) {
     const query = new URLSearchParams()
     if (search) query.set('search', search)
-    if (category) query.set('category', category)
     query.set('page', String(target))
     return `/products?${query.toString()}`
   }
 
+  const countLabel = `${meta.total} ${meta.total === 1 ? 'produto' : 'produtos'}${
+    search ? ` para “${search}”` : ''
+  }`
+
   return (
     <>
-      <form className="glass mb-8 flex flex-col gap-2 rounded-2xl p-2 sm:flex-row">
-        <input
-          name="search"
-          defaultValue={search}
-          placeholder="Buscar produto"
-          aria-label="Buscar produto"
-          className="input flex-1"
-        />
-        <input
-          name="category"
-          defaultValue={category}
-          placeholder="Categoria"
-          aria-label="Categoria"
-          className="input sm:w-56"
-        />
-        <button className="btn btn-primary">Filtrar</button>
-        {(search || category) && (
+      <form role="search" className="glass mb-6 flex gap-2 rounded-2xl p-2">
+        <div className="relative flex-1">
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            name="search"
+            type="search"
+            defaultValue={search}
+            placeholder="Buscar produto"
+            aria-label="Buscar produto"
+            className="input !pl-12"
+          />
+        </div>
+        <button className="btn btn-primary">Buscar</button>
+        {search && (
           <Link href="/products" className="btn btn-secondary">
             Limpar
           </Link>
         )}
       </form>
 
+      <p className="mb-6 text-sm text-slate-500" aria-live="polite">
+        {countLabel}
+      </p>
+
       {products.length === 0 ? (
         <div className="card mx-auto max-w-md p-10 text-center">
           <h2 className="text-xl font-semibold">Nenhum produto encontrado</h2>
           <p className="mt-2 text-sm text-slate-500">
-            Tente outro termo de busca ou limpe os filtros.
+            Tente outro termo de busca.
           </p>
           <Link href="/products" className="btn btn-primary mt-6">
             Ver todos
@@ -87,8 +103,14 @@ async function Catalog({ searchParams }: { searchParams: SearchParams }) {
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {products.map((product, index) => (
+            <div
+              key={product.id}
+              className="animate-fade-up"
+              style={{ animationDelay: `${Math.min(index, 11) * 60}ms` }}
+            >
+              <ProductCard product={product} />
+            </div>
           ))}
         </div>
       )}

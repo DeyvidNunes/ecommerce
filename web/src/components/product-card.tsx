@@ -9,7 +9,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="card group flex flex-col overflow-hidden hover:scale-[1.02] hover:shadow-md"
+      className="card group flex h-full flex-col overflow-hidden hover:scale-[1.02] hover:shadow-md"
     >
       <div className="relative">
         <ProductImage
@@ -17,8 +17,16 @@ export function ProductCard({ product }: { product: Product }) {
           name={product.name}
           alt=""
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-          className="h-44"
+          className="h-48"
         />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-end bg-gradient-to-t from-slate-900/50 via-transparent to-transparent p-4 opacity-0 transition-all duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+        >
+          <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900 backdrop-blur">
+            Ver produto →
+          </span>
+        </div>
         {soldOut && (
           <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-rose-600 backdrop-blur">
             Esgotado
