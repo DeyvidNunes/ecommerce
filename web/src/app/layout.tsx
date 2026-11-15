@@ -25,14 +25,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="pt-BR">
-        <body className={`${inter.variable} font-sans antialiased`}>
+   <html lang="pt-BR">
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <ClerkProvider>
           <Header />
           {children}
           <Footer />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   )
 }
