@@ -1,6 +1,6 @@
 # Lume
 
-E-commerce fullstack de demonstração: catálogo, carrinho, pagamento com **Stripe**, pedidos confirmados por **webhook**, autenticação com **Clerk**, e-mail com **Resend** e painel de administração. API em **NestJS**, frontend em **Next.js**.
+E-commerce fullstack : catálogo, carrinho, pagamento com **Stripe**, pedidos confirmados por **webhook**, autenticação com **Clerk**, e-mail com **Resend** e painel de administração. API em **NestJS**, frontend em **Next.js**.
 
 Projeto de estudo e de portfólio, construído por fases, com foco nos pontos em que um e-commerce exige consistência: dinheiro, estoque e eventos que podem chegar repetidos.
 
@@ -8,8 +8,7 @@ Projeto de estudo e de portfólio, construído por fases, com foco nos pontos em
 
 | | |
 |---|---|
-| **Site** | `<URL-DO-SITE-NA-VERCEL>` |
-| **API** | `<URL-DA-API-NO-RENDER>` (a rota `/health` mostra se está de pé) |
+| **Site** | https://ecommerce-seven-wine.vercel.app/ |
 | **Código** | https://github.com/DeyvidNunes/ecommerce |
 
 > A API roda no plano gratuito do Render e **dorme depois de 15 minutos sem uso**: a primeira chamada pode levar cerca de um minuto. Veja [Limitações conhecidas](#limitações-conhecidas).
