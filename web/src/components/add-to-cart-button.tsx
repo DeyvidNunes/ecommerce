@@ -1,51 +1,55 @@
-'use client'
+"use client";
 
-import { SignInButton, useAuth } from '@clerk/nextjs'
-import Link from 'next/link'
-import { useState } from 'react'
-import { useApi } from '@/hooks/use-api'
-import { ApiError } from '@/lib/api-error'
-import type { Cart } from '@/lib/types'
+import { SignInButton, useAuth } from "@clerk/nextjs";
+import Link from "next/link";
+import { useState } from "react";
+import { useApi } from "@/hooks/use-api";
+import { ApiError } from "@/lib/api-error";
+import type { Cart } from "@/lib/types";
+import { notifyCartChanged } from "@/lib/cart-events";
 
 export function AddToCartButton({
   productId,
   stock,
 }: {
-  productId: number
-  stock: number
+  productId: number;
+  stock: number;
 }) {
-  const { isLoaded, isSignedIn } = useAuth()
-  const api = useApi()
-  const [quantity, setQuantity] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  const { isLoaded, isSignedIn } = useAuth();
+  const api = useApi();
+  const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
 
-  const maxQuantity = Math.min(stock, 99)
+  const maxQuantity = Math.min(stock, 99);
 
   if (stock === 0) {
     return (
       <button disabled className="btn btn-primary mt-2 w-full sm:w-auto">
         Esgotado
       </button>
-    )
+    );
   }
 
   async function handleAdd() {
-    setLoading(true)
-    setMessage(null)
+    setLoading(true);
+    setMessage(null);
     try {
-      await api<Cart>('/cart/items', {
-        method: 'POST',
+      await api<Cart>("/cart/items", {
+        method: "POST",
         body: { productId, quantity },
-      })
-      setMessage({ ok: true, text: 'Produto adicionado ao carrinho.' })
+      });
+      setMessage({ ok: true, text: "Produto adicionado ao carrinho." });
+      notifyCartChanged();
     } catch (error) {
       setMessage({
         ok: false,
-        text: error instanceof ApiError ? error.message : 'Erro inesperado',
-      })
+        text: error instanceof ApiError ? error.message : "Erro inesperado",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -66,7 +70,10 @@ export function AddToCartButton({
           >
             −
           </button>
-          <span className="min-w-12 text-center font-semibold" aria-live="polite">
+          <span
+            className="min-w-12 text-center font-semibold"
+            aria-live="polite"
+          >
             {quantity}
           </span>
           <button
@@ -92,21 +99,21 @@ export function AddToCartButton({
             disabled={loading || !isLoaded}
             className="btn btn-primary flex-1 sm:flex-none"
           >
-            {loading ? 'Adicionando…' : 'Adicionar ao carrinho'}
+            {loading ? "Adicionando…" : "Adicionar ao carrinho"}
           </button>
         )}
       </div>
 
       {message && (
         <p
-          role={message.ok ? 'status' : 'alert'}
+          role={message.ok ? "status" : "alert"}
           className={`rounded-xl border px-4 py-3 text-sm ${
             message.ok
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-              : 'border-rose-200 bg-rose-50 text-rose-700'
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
           }`}
         >
-          {message.text}{' '}
+          {message.text}{" "}
           {message.ok && (
             <Link href="/cart" className="font-semibold underline">
               Ver carrinho
@@ -115,5 +122,5 @@ export function AddToCartButton({
         </p>
       )}
     </div>
-  )
+  );
 }

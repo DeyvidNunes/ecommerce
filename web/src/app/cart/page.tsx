@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api-error";
 import { formatPrice } from "@/lib/format";
 import type { Cart, CartItem, CheckoutResponse } from "@/lib/types";
 import { ProductImage } from "@/components/product-image";
+import { notifyCartChanged } from "@/lib/cart-events";
 
 const MAX_QUANTITY = 99;
 
@@ -83,6 +84,7 @@ export default function CartPage() {
     try {
       await request();
       await load();
+      notifyCartChanged();
     } catch (error) {
       setActionError(errorMessage(error));
     } finally {

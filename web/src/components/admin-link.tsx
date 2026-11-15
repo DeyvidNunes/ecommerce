@@ -10,7 +10,7 @@ export function AdminLink() {
   return (
     <Link
       href="/admin"
-      className="rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-md"
+      className="rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 transition-all duration-300 hover:scale-[1.02] hover:bg-indigo-100"
     >
       Admin
     </Link>
