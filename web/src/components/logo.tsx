@@ -14,7 +14,7 @@ export function Logo({ className = '' }: { className?: string }) {
       >
         {BRAND.name.charAt(0)}
       </span>
-      <span className="text-xl font-bold tracking-tight">{BRAND.name}</span>
+      <span className="text-xl font-bold tracking-tight max-[359px]:hidden">{BRAND.name}</span>
     </Link>
   )
 }

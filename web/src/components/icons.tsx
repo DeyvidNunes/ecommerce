@@ -1,15 +1,17 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
 export type IconName =
-  | 'check'
-  | 'card'
-  | 'lock'
-  | 'cart'
-  | 'mail'
-  | 'box'
-  | 'shield'
-  | 'user'
-  | 'arrow'
+  | "check"
+  | "card"
+  | "lock"
+  | "cart"
+  | "mail"
+  | "box"
+  | "shield"
+  | "user"
+  | "arrow"
+  | "menu"
+  | "close";
 
 const PATHS: Record<IconName, ReactNode> = {
   check: <path d="M20 6 9 17l-5-5" />,
@@ -62,14 +64,16 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="m12 5 7 7-7 7" />
     </>
   ),
-}
+  menu: <path d="M3 6h18M3 12h18M3 18h18" />,
+  close: <path d="M18 6 6 18M6 6l12 12" />,
+};
 
 export function Icon({
   name,
-  className = 'h-4 w-4',
+  className = "h-4 w-4",
 }: {
-  name: IconName
-  className?: string
+  name: IconName;
+  className?: string;
 }) {
   return (
     <svg
@@ -84,5 +88,5 @@ export function Icon({
     >
       {PATHS[name]}
     </svg>
-  )
+  );
 }
